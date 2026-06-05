@@ -106,7 +106,7 @@ Alternatively you can just pick the installer from the release page and run the 
 
 ## Using the Tool
 
-1. Connect your embedded device to your machine via serial (USB/UART).
+1. Connect your embedded device to your machine via serial port (USB/UART).
 2. Ensure your device is transmitting data using the expected encoding format (see C/ example).
 3. Launch the application.
 4. Select the appropriate serial port & click connect.
@@ -133,7 +133,7 @@ So each run has a unique identifier.
 ---
 
 ## Using the C Encoder Example
-Follow the instruction in C/README.MD
+Follow the instructions in [C/README.MD](C/README.MD).
 
 ---
 
