@@ -13,6 +13,18 @@ It is designed for resource-constrained environments, where:
 - Real-time data streaming is required
 
 ---
+
+## Table of Contents
+
+- [Architecture](#architecture)
+- [Core Component](#core-component)
+- [Usage](#usage)
+- [Porting](#porting)
+- [Additional Information](#additional-information)
+- [License](#license)
+
+
+---
 ## Architecture
 The encoder is built around a circular (ring) buffer.
 ```

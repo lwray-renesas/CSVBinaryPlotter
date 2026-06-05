@@ -12,6 +12,40 @@ The need for this project came from operating in resource constrained embedded e
 
 ---
 
+## Table of Contents
+
+- [What's Included](#whats-included)
+  - [Components](#components)
+- [Getting Started](#getting-started)
+  - [Prerequisites](#prerequisites)
+  - [Installation Source](#installation-source)
+  - [Running Source](#running-source)
+  - [Release Page](#release-page)
+- [Using the Tool](#using-the-tool)
+  - [File Save Behaviour](#file-save-behaviour)
+- [Using the C Encoder Example](#using-the-c-encoder-example)
+- [Protocol Breakdown](#protocol-breakdown)
+  - [1. Stream Structure](#1-stream-structure)
+  - [2. Metadata Format](#2-metadata-format)
+    - [2.1 Metadata Types](#21-metadata-types)
+    - [2.2 Metadata Definitions](#22-metadata-definitions)
+      - [2.2.1 Column Names (#N)](#221-column-names-n)
+      - [2.2.2 Column Types (#T)](#222-column-types-t)
+      - [2.2.3 Endianness (#E)](#223-endianness-e)
+    - [2.3 Metadata Requirements](#23-metadata-requirements)
+    - [2.4 Metadata Request](#24-metadata-request)
+  - [3. Data Row Format](#3-data-row-format)
+  - [4. Binary Encoding and Escaping](#4-binary-encoding-and-escaping)
+    - [4.1 Reserved Characters](#41-reserved-characters)
+    - [4.2 Escape Mechanism](#42-escape-mechanism)
+    - [4.3 Decoding Rule](#43-decoding-rule)
+  - [5. Field Parsing](#5-field-parsing)
+    - [5.1 Parsing Pipeline](#51-parsing-pipeline)
+    - [5.2 Typed Conversion](#52-typed-conversion)
+- [License](#license)
+
+---
+
 ## What's Included
 The project is structured as follows:
 ```
