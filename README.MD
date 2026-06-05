@@ -76,7 +76,7 @@ The project is structured as follows:
 
 - https://nodejs.org/ (recommended LTS version)
 - npm (comes with Node.js)
-- A serial device sending properly encoded CSV binary data
+- A serial device sending properly encoded CSV binary data (see [C/README.MD](C/README.MD) for more information)
 
 ### Installation Source
 
