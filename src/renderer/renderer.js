@@ -182,24 +182,6 @@ function rebuildFromParser(parser) {
   chart.update('none');
 }
 
-
-// Function to start & manage the graph update loop
-function startGraphLoop(intervalMs) {
-  // If already running, stop first
-  if (graphInterval !== null) {
-    clearInterval(graphInterval);
-  }
-
-  currentIntervalMs = intervalMs;
-
-  graphInterval = setInterval(() => {
-    if (isRunning) {
-      updateYAxis();
-      chart.update('none');
-    }
-  }, intervalMs);
-}
-
 // Helper function to generate a new colour
 function getColour(index) {
   const goldenRatio = 137.508;  // spreads colours nicely
@@ -213,8 +195,6 @@ function getColour(index) {
 function updateYAxis() {
   let min = Infinity;
   let max = -Infinity;
-
-
 
   chart.data.datasets.forEach((dataset, i) => {
     // Skip hidden datasets
@@ -265,6 +245,9 @@ function processSerialData(batch) {
       ++currentSample;
     }
   }
+
+  updateYAxis();
+  chart.update('none');
 }
 
 function StateUpdated(newState) {
@@ -349,9 +332,6 @@ function StateUpdated(newState) {
   } else {
     document.getElementById('saveFolderPath').value = '';
   }
-
-  // Check graph loop update interval
-  startGraphLoop(Math.round(1000 / newState.sampleRateHz));
 
   // Update buffers
   const parser = newState.parser;
