@@ -83,7 +83,7 @@ The project is structured as follows:
 
 Clone the repository:
 ```bash
-git clone <https://github.com/lwray-renesas/CSVBinaryPlotter.git>
+git clone https://github.com/lwray-renesas/CSVBinaryPlotter.git
 cd CSVBinaryPlotter
 ```
 
