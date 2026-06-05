@@ -14,11 +14,12 @@ The need for this project came from operating in resource constrained embedded e
 
 ## What's Included
 The project is structured as follows:
-
+```
 ├── C/src           # Example C encoder library for embedded systems<br>
-├── C/README.md     # readme document for learning how to port the project<br>
+├── C/README.md     # Readme document for learning how to port the project<br>
 ├── src/            # Electron application source code (UI, serial handling, plotting)<br>
 └── README.md       # This document
+```
 
 ### Components
 
