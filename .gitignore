@@ -1,0 +1,90 @@
+# =========================
+# Node.js dependencies
+# =========================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# =========================
+# Electron build outputs
+# =========================
+dist/
+out/
+build/
+release/
+*.app
+*.exe
+*.dmg
+*.snap
+*.deb
+*.rpm
+
+# Electron Forge
+.out/
+
+# Electron Builder
+dist-electron/
+app-dist/
+
+# =========================
+# Logs
+# =========================
+logs/
+*.log
+
+# =========================
+# Environment files
+# =========================
+.env
+.env.*
+!.env.example
+
+# =========================
+# VS Code
+# =========================
+.vscode/*
+!.vscode/launch.json
+!.vscode/settings.json
+!.vscode/extensions.json
+
+# =========================
+# OS generated files
+# =========================
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# =========================
+# Cache / temp
+# =========================
+.cache/
+.temp/
+tmp/
+*.tsbuildinfo
+
+# =========================
+# Coverage (testing)
+# =========================
+coverage/
+
+# =========================
+# Electron specific runtime artifacts
+# =========================
+electron-debug.log
+devtools.log
+
+# =========================
+# Optional: serial / hardware logs
+# =========================
+data_log.csv
+serial_log.csv
+
+# =========================
+# Package lock (optional choice)
+# =========================
+# Uncomment if you don't want to commit lockfiles:
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml

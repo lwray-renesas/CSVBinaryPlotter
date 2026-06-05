@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self'; style-src 'self';" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CSV Binary Plotter</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body>
+
+<div class="app layout">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+
+    <div class="section-title">Serial</div>
+
+    <div class="control-group">
+      <label>Port</label>
+      <select id="port"></select>
+    </div>
+
+    <div class="control-group">
+      <label>Baud Rate</label>
+      <input id="baudRate" type="number" value="115200" />
+    </div>
+
+    <div class="inline-controls">
+      <div class="control-group compact">
+        <label>Data Bits</label>
+        <select id="dataBits">
+          <option value="8">8</option>
+          <option value="7">7</option>
+        </select>
+      </div>
+
+      <div class="control-group compact">
+        <label>Parity</label>
+        <select id="parity">
+          <option value="none">None</option>
+          <option value="odd">Odd</option>
+          <option value="even">Even</option>
+        </select>
+      </div>
+
+      <div class="control-group compact">
+        <label>Stop Bits</label>
+        <select id="stopBits">
+          <option value="1">1</option>
+          <option value="2">2</option>
+        </select>
+      </div>
+    </div>
+
+    <button id="serialConnectButton" class="btn primary">Connect</button>
+    <button id="serialRefreshButton" class="btn secondary">Refresh</button>
+
+    <div class="section-divider"></div>
+
+    <div class="section-title">View</div>
+
+    <div class="control-group">
+      <label>Window Size</label>
+      <input id="windowSize" type="number" value="200" />
+    </div>
+
+    <div class="section-divider"></div>
+
+    <div class="section-title">Logging</div>
+
+    <div class="control-group">
+      <label>Save Folder</label>
+      <div class="inline-controls">
+        <input id="saveFolderPath" type="text" readonly />
+        <button id="browseSaveFolder" class="btn secondary">Browse</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <div class="topbar">
+      <div class="center-controls">
+
+        <div class="status-item">
+          <div id="connectionStatusDot" class="dot off"></div>
+          <span id="connectionStatusText">Disconnected</span>
+        </div>
+
+        <button id="runToggleButton" class="btn run-control success" disabled>
+          Start
+        </button>
+
+        <div class="status-item">
+          <div id="runningStatusDot" class="dot off"></div>
+          <span id="runningStatusText">Stopped</span>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="card chart-card">
+      <div class="chart-header">
+        <div class="chart-title">Live Sensor Data</div>
+      </div>
+
+      <div class="chart-wrapper">
+        <canvas id="chart"></canvas>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<script src="../../node_modules/chart.js/dist/chart.umd.js"></script>
+<script src="renderer.js"></script>
+
+</body>
+</html>
