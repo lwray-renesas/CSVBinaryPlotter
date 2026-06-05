@@ -79,7 +79,7 @@ The project is structured as follows:
 - OR just download the application from the releases section.
 - A serial device sending properly encoded CSV binary data (see [C/README.MD](C/README.MD) for more information)
 
-### Installation Source
+### Installing Source
 
 Clone the repository:
 ```bash
