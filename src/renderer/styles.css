@@ -28,7 +28,9 @@ body {
 
 /* SIDEBAR */
 .sidebar {
-  width: 300px;
+  flex: 0 0 22%;   /* fixed percentage of width */
+  min-width: 260px;
+  max-width: 400px;
   background: rgba(17,24,39,0.75);
   border: 1px solid rgba(255,255,255,0.08);
   border-radius: var(--radius);
