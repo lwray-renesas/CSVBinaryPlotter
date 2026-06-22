@@ -127,6 +127,14 @@ body {
   min-width: 0; /* prevents overflow weirdness */
 }
 
+/* VERSION*/
+.app-version {
+  bottom: 12px;
+  left: 18px;
+  font-size: 0.75rem;
+  color: var(--muted);
+  opacity: 0.7;
+}
 
 /* MAIN */
 .main {
