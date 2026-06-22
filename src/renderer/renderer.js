@@ -5,6 +5,10 @@ let currentSample = 0;
 let graphInterval = null;
 let currentIntervalMs = 50;
 let lastParserSignature = '';
+let autoYAxisEnabled = true;
+let manualYMin = 0;
+let manualYMax = 100;
+
 
 const datasets = [];
 const dataBuffers = [];
@@ -190,9 +194,23 @@ function getColour(index) {
   return `hsl(${hue}, 70%, 55%)`;
 }
 
-// Helper functino to update the y axis on the chart to scale to min/max data in
+// Helper function to modify the axis controls between disabled/enabled when
+// going between auto and manual
+function updateYAxisControls() {
+  document.getElementById('yMin').disabled = autoYAxisEnabled;
+  document.getElementById('yMax').disabled = autoYAxisEnabled;
+}
+
+// Helper function to update the y axis on the chart to scale to min/max data in
 // window
 function updateYAxis() {
+  if (!autoYAxisEnabled) {
+    chart.options.scales.y.min = manualYMin;
+    chart.options.scales.y.max = manualYMax;
+    return;
+  }
+
+  // ===== AUTO MODE (unchanged) =====
   let min = Infinity;
   let max = -Infinity;
 
@@ -219,6 +237,7 @@ function updateYAxis() {
       min -= 1;
       max += 1;
     }
+
     chart.options.scales.y.min = min;
     chart.options.scales.y.max = max;
   }
@@ -374,6 +393,33 @@ window.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('parity').onchange = applyConfig;
   document.getElementById('stopBits').onchange = applyConfig;
   document.getElementById('saveFolderPath').onchange = applyConfig;
+  document.getElementById('yAxisToggle').addEventListener('change', (e) => {
+    autoYAxisEnabled = e.target.checked;
+
+    // Freeze current axis values when turning OFF (going manual)
+    if (!autoYAxisEnabled) {
+      manualYMin = chart.options.scales.y.min ?? manualYMin;
+      manualYMax = chart.options.scales.y.max ?? manualYMax;
+
+      document.getElementById('yMin').value = manualYMin;
+      document.getElementById('yMax').value = manualYMax;
+    }
+
+    updateYAxisControls();
+    chart.update('none');
+  });
+  document.getElementById('yMin').onchange = (e) => {
+    manualYMin = Number(e.target.value);
+  };
+  document.getElementById('yMax').onchange = (e) => {
+    manualYMax = Number(e.target.value);
+  };
+
+  // Initialse the axis scaling controls
+  autoYAxisEnabled = document.getElementById('yAxisToggle').checked;
+  manualYMin = Number(document.getElementById('yMin').value);
+  manualYMax = Number(document.getElementById('yMax').value);
+  updateYAxisControls();
 
   // Handle Serial Data
   window.api.On_SerialDataReady((batch) => {
