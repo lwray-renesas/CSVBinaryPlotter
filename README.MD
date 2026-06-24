@@ -10,6 +10,8 @@ The project also comes with an example C code based encoding library used as an 
 
 The need for this project came from operating in resource constrained embedded environments where a need to view internal data (such as ADC readings) in real time and store the results for analysis.
 
+For another useful tool which allows viewing the generated CSV files from this tool, check out [CSVViewer](https://github.com/lwray-renesas/CSVViewer).
+
 ---
 
 ## Table of Contents
