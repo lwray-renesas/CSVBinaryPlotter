@@ -44,6 +44,7 @@ For another useful tool which allows viewing the generated CSV files from this t
   - [5. Field Parsing](#5-field-parsing)
     - [5.1 Parsing Pipeline](#51-parsing-pipeline)
     - [5.2 Typed Conversion](#52-typed-conversion)
+    - [5.3 Fixed-Point (Q Format) Support](#53-fixed-point-q-format-support)
 - [License](#license)
 
 ---
@@ -197,6 +198,8 @@ Supported types:
 | i64  | 8            | Signed 64-bit |
 | f32  | 4            | IEEE 754 float |
 | f64  | 8            | IEEE 754 double |
+| qx.y |              | Signed fixed point notation - see [5.3 Fixed-Point (Q Format) Support](#53-fixed-point-q-format-support)|
+| uqx.y  |             | Unsigned fixed point notation - see [5.3 Fixed-Point (Q Format) Support](#53-fixed-point-q-format-support)|
 
 Example:
 ```
@@ -310,6 +313,90 @@ Example:
 f32 + little endian → readFloatLE()
 u16 + big endian    → readUInt16BE()
 ```
+
+#### 5.3 Fixed-Point (Q Format) Support
+
+The protocol supports fixed-point numeric representation using Q format.
+
+##### 5.3.1 Syntax
+```
+qX.Y    → signed fixed-point
+uqX.Y   → unsigned fixed-point
+```
+
+Where:
+
+- `X` = number of integer bits
+- `Y` = number of fractional bits
+
+Example:
+```
+q8.8    → signed 16-bit fixed-point
+uq1.15  → unsigned 16-bit fixed-point
+```
+---
+
+##### 5.3.2 Storage Size Rule
+
+Q format values are stored in the **smallest power-of-two integer size** that can contain all bits:
+
+| Total Bits (X + Y) | Storage Size |
+|------------------|-------------|
+| ≤ 8              | 8-bit       |
+| ≤ 16             | 16-bit      |
+| ≤ 32             | 32-bit      |
+| ≤ 64             | 64-bit      |
+
+Example:
+```
+q5.5   → 10 bits → stored as 16-bit
+q12.4  → 16 bits → stored as 16-bit
+q20.12 → 32 bits → stored as 32-bit
+```
+---
+
+##### 5.3.3 Encoding Rule (Embedded Side)
+
+For correct decoding, values **must be properly extended**:
+
+**Signed Q (`qX.Y`):**
+- Must be **sign-extended** to the full storage width
+
+**Unsigned Q (`uqX.Y`):**
+- Upper unused bits must be **zero**
+
+Failure to follow these rules will result in incorrect decoded values.
+
+---
+
+##### 5.3.4 Decoding Rule (Host Side)
+
+When decoding:
+```
+float_value = integer_value / (2^Y)
+```
+Example:
+
+| Raw Value | Format | Result |
+|----------|--------|--------|
+| 256      | q8.8   | 1.0    |
+| 128      | q8.8   | 0.5    |
+| 32768    | uq1.15 | 1.0    |
+
+---
+
+##### 5.3.5 Example Metadata
+
+```
+#Nvoltage,current,temperature
+#Tq8.8,uq1.15,q16.16
+#Elittle
+```
+This defines:
+
+- `voltage` → signed Q8.8
+- `current` → unsigned Q1.15
+- `temperature` → signed Q16.16
 
 ---
 ## License

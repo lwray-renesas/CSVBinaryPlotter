@@ -38,6 +38,56 @@ const TYPES = {
   },
 };
 
+function nextPow2(bits) {
+  if (bits <= 8) return 8;
+  if (bits <= 16) return 16;
+  if (bits <= 32) return 32;
+  if (bits <= 64) return 64;
+  throw new Error(`Q format too large: ${bits} bits`);
+}
+
+function getBaseType(bits, isUnsigned) {
+  const map = {
+    8: isUnsigned ? TYPES.u8 : TYPES.i8,
+    16: isUnsigned ? TYPES.u16 : TYPES.i16,
+    32: isUnsigned ? TYPES.u32 : TYPES.i32,
+    64: isUnsigned ? TYPES.u64 : TYPES.i64
+  };
+
+  return map[bits];
+}
+
+function parseQType(typeName) {
+  const match = /^(u?)q(\d+)\.(\d+)$/.exec(typeName);
+  if (!match) return null;
+
+  const isUnsigned = match[1] === 'u';
+  const intBits = Number(match[2]);
+  const fracBits = Number(match[3]);
+
+  const totalBits = intBits + fracBits;
+  const storageBits = nextPow2(totalBits);
+
+  const baseType = getBaseType(storageBits, isUnsigned);
+
+  if (!baseType) {
+    throw new Error(`Unsupported Q format size: ${storageBits} bits`);
+  }
+
+  return {
+    size: baseType.size,
+    makeReader: (endian) => {
+      const baseReader = baseType[endian];
+      const scale = 2 ** fracBits;
+
+      return (buf) => {
+        const raw = baseReader(buf);
+        return raw / scale;
+      };
+    }
+  };
+}
+
 class CsvBinaryParser {
   /**
    * @param {Object} options
@@ -181,14 +231,25 @@ class CsvBinaryParser {
     if (!this.types || !this.endian) return;
 
     this.columnReaders = this.types.map(typeName => {
+      const q = parseQType(typeName);
+      if (q) {
+        return q.makeReader(this.endian);
+      }
+
       const type = TYPES[typeName];
       if (!type) {
         throw new Error(`Unknown type: ${typeName}`);
       }
+
       return type[this.endian];
     });
 
-    this.columnSizes = this.types.map(typeName => TYPES[typeName].size);
+    this.columnSizes = this.types.map(typeName => {
+      const q = parseQType(typeName);
+      if (q) return q.size;
+
+      return TYPES[typeName].size;
+    });
   }
 
 
