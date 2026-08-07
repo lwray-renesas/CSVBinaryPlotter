@@ -20,6 +20,7 @@ const chart = new Chart(ctx, {
     responsive: true,
     maintainAspectRatio: false,
     animation: false,
+    parsing: false,
     interaction: {
       intersect: false,
       mode: 'index',
@@ -43,6 +44,7 @@ const chart = new Chart(ctx, {
         ticks: {
           color: '#94a3b8',
         },
+        type: 'linear'
       },
       y: {
         grid: {
@@ -61,21 +63,18 @@ function updatePlot(rows) {
   if (!rows.length) {
     return;
   }
-
   const channels = rows[0].length;
-
   for (let c = 0; c < channels; c++) {
     const dataset = datasets[c];
     if (!dataset) {
       continue;
     }
     dataset.data.length = 0;
-    for (const row of rows) {
-      dataset.data.push(row[c]);
+    for (let i = 0; i < rows.length; i++) {
+      dataset.data.push({x: i, y: rows[i][c]});
     }
   }
 
-  chart.data.labels = [...Array(rows.length).keys()];
   updateYAxis();
   chart.update('none');
 }
