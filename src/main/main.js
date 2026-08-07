@@ -11,6 +11,7 @@ let win;
 let port;
 let plotBuffer = [];
 let currentLogFilePath = null;
+let parserReady = false;
 
 let appState = new StateManager((newState) => {
   // On state change, send state update and new state object.
@@ -44,9 +45,9 @@ function pushPlotRow(values) {
 }
 
 function handleParsedRow(values) {
-  if (appState.get().isRunning) {
+  if (appState.get().isRunning && parserReady) {
     pushPlotRow(values);
-    if (win && !win.isDestroyed()) {
+    if (win && !win.isDestroyed() && currentLogFilePath) {
       fs.appendFile(currentLogFilePath, values.join(',') + '\n', (err) => {
         if (err) console.error(err);
       });
@@ -91,6 +92,7 @@ function checkHandshakeComplete() {
   if (!complete) return;
 
   // Reset parser now that we know format
+  parserReady = true;
   binaryParser.reset();
 }
 
@@ -247,6 +249,7 @@ ipcMain.handle('run-toggle-notify', async () => {
   const state = appState.get();
 
   if (state.isRunning) {
+    parserReady = false;
     binaryParser.reset();
 
     // Reset parser state in appState
