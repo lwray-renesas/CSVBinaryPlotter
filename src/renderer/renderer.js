@@ -35,6 +35,10 @@ const chart = new Chart(ctx, {
           color: '#e5e7eb',
         },
       },
+      decimation: {
+        enabled: true,
+        algorithm: 'min-max',
+      },
     },
     scales: {
       x: {

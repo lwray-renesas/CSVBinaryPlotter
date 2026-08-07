@@ -212,7 +212,7 @@ class CsvBinaryParser {
         throw new Error(`Missing reader for column ${i}`);
       }
 
-      if (buf.length < expectedSize) {
+      if (buf.length !== expectedSize) {
         throw new Error(`Field ${i} too small (got ${buf.length}, expected ${
             expectedSize})`);
       }
