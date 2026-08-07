@@ -9,8 +9,7 @@ const {StateManager, defaultState} = require('./state');
 
 let win;
 let port;
-let pendingRows = [];
-let lastFlush = Date.now();
+let plotBuffer = [];
 let currentLogFilePath = null;
 
 let appState = new StateManager((newState) => {
@@ -19,6 +18,7 @@ let appState = new StateManager((newState) => {
     win.webContents.send('state-update', newState);
   }
 });
+
 let binaryParser =
     new CsvBinaryParser({onRow: handleParsedRow, onMeta: handleMeta});
 
@@ -35,33 +35,21 @@ function generateLogFilePath(folder) {
   return path.join(folder, `data_${ts}.csv`);
 }
 
+function pushPlotRow(values) {
+  plotBuffer.push(values);
+
+  while (plotBuffer.length > appState.get().maxSamples) {
+    plotBuffer.shift();
+  }
+}
 
 function handleParsedRow(values) {
   if (appState.get().isRunning) {
-    const refreshRate = Math.round(1000 / appState.get().sampleRateHz)
-    pendingRows.push(values);
-    const now = Date.now();
-    if ((now - lastFlush) > refreshRate) {
-      if (win && !win.isDestroyed()) {
-        win.webContents.send('serial-data-ready', pendingRows);
-        if (currentLogFilePath) {
-          let lines = '';
-          for (const row of pendingRows) {
-            for (let i = 0; i < row.length; ++i) {
-              lines += row[i];
-              if (i < row.length - 1) {
-                lines += ',';
-              }
-            }
-            lines += '\n';
-          }
-          fs.appendFile(currentLogFilePath, lines, (err) => {
-            if (err) console.error(err);
-          });
-        }
-      }
-      pendingRows.length = 0;
-      lastFlush = now;
+    pushPlotRow(values);
+    if (win && !win.isDestroyed()) {
+      fs.appendFile(currentLogFilePath, values.join(',') + '\n', (err) => {
+        if (err) console.error(err);
+      });
     }
   }
 }
@@ -260,8 +248,6 @@ ipcMain.handle('run-toggle-notify', async () => {
 
   if (state.isRunning) {
     binaryParser.reset();
-    pendingRows.length = 0;
-    lastFlush = Date.now();
 
     // Reset parser state in appState
     appState.set(
@@ -300,13 +286,23 @@ ipcMain.handle('config-update', async (_, config) => {
       });
     }
 
-    // Update parser settings if possible
-    if (binaryParser) {
-      binaryParser.setFormat(config.dataFormat, config.dataEndian);
+    // Update sample buffer
+    if (config.maxSamples) {
+      appState.set({
+        maxSamples: config.maxSamples,
+      });
+
+      while (plotBuffer.length > config.maxSamples) {
+        plotBuffer.shift();
+      }
     }
   } catch (err) {
     console.error(err);
   }
+});
+
+ipcMain.handle('plot-data-get', async () => {
+  return plotBuffer;
 });
 
 app.on('before-quit', () => {

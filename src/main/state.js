@@ -12,6 +12,8 @@ const defaultState = {
     parity: 'none',
   },
 
+  maxSamples: 200,
+
   parser: {
     types: [],
     names: [],
@@ -22,7 +24,6 @@ const defaultState = {
   lastError: null,
 
   isPortBusy: false,  // connecting/disconnecting
-  sampleRateHz: 20    // derived from your 50ms flush
 };
 
 class StateManager {

@@ -1,17 +1,12 @@
 let isRunning = false;
 let isConnected = false;
-let maxSamples = 200;
-let currentSample = 0;
-let graphInterval = null;
-let currentIntervalMs = 50;
 let lastParserSignature = '';
 let autoYAxisEnabled = true;
 let manualYMin = 0;
 let manualYMax = 100;
-
+let plotRequestInFlight = false;
 
 const datasets = [];
-const dataBuffers = [];
 
 const ctx = document.getElementById('chart').getContext('2d');
 
@@ -60,6 +55,48 @@ const chart = new Chart(ctx, {
     },
   },
 });
+
+// Helper to update plot datasets
+function updatePlot(rows) {
+  if (!rows.length) {
+    return;
+  }
+
+  const channels = rows[0].length;
+
+  for (let c = 0; c < channels; c++) {
+    const dataset = datasets[c];
+    if (!dataset) {
+      continue;
+    }
+    dataset.data.length = 0;
+    for (const row of rows) {
+      dataset.data.push(row[c]);
+    }
+  }
+
+  chart.data.labels = [...Array(rows.length).keys()];
+  updateYAxis();
+  chart.update('none');
+}
+
+// Plots data to the graph
+async function plotLoop() {
+  if (isRunning && !plotRequestInFlight) {
+    plotRequestInFlight = true;
+
+    try {
+      const rows = await window.api.GetPlotData();
+
+      updatePlot(rows);
+
+    } finally {
+      plotRequestInFlight = false;
+    }
+  }
+
+  requestAnimationFrame(plotLoop);
+}
 
 // Gets the serial ports currently enumerated
 async function SerialTryListPorts() {
@@ -120,28 +157,12 @@ async function SaveFolderTryBrowse() {
 
 // Change configurations that main needs to be aware of
 async function applyConfig() {
-  maxSamples = parseInt(document.getElementById('windowSize').value, 10);
-  if (Number.isNaN(maxSamples) || maxSamples < 1) {
+  const localMaxSamples =
+      parseInt(document.getElementById('windowSize').value, 10);
+
+  if (Number.isNaN(localMaxSamples) || localMaxSamples < 1) {
     return;
   }
-  currentSample = 0;
-
-  // Rebuild buffers
-  dataBuffers.forEach((buffer, i) => {
-    const newBuffer = new Array(maxSamples).fill(null);
-
-    // Copy existing data (right-aligned)
-    const copyLength = Math.min(buffer.length, maxSamples);
-    for (let j = 0; j < copyLength; j++) {
-      newBuffer[maxSamples - copyLength + j] =
-          buffer[buffer.length - copyLength + j];
-    }
-
-    dataBuffers[i] = newBuffer;
-    datasets[i].data = newBuffer;
-  });
-  chart.data.labels = [...Array(maxSamples).keys()];
-  chart.update('none');
 
   // Inform main process of config update
   const settings = {
@@ -154,6 +175,7 @@ async function applyConfig() {
 
   const config = {
     portSettings: settings,
+    maxSamples: localMaxSamples,
   };
 
   await window.api.ConfigUpdate(config);
@@ -164,16 +186,11 @@ function rebuildFromParser(parser) {
   if (!parser.names?.length || !parser.types?.length) return;
 
   datasets.length = 0;
-  dataBuffers.length = 0;
 
   parser.names.forEach((name, i) => {
-    const buffer = new Array(maxSamples).fill(null);
-
-    dataBuffers.push(buffer);
-
     datasets.push({
       label: name,
-      data: buffer,
+      data: [],
       borderWidth: 2,
       borderColor: getColour(i),
       tension: 0.25,
@@ -182,11 +199,7 @@ function rebuildFromParser(parser) {
     });
   });
 
-  currentSample = 0;
-
   chart.data.datasets = datasets;
-  chart.data.labels = [...Array(maxSamples).keys()];
-
   chart.update('none');
 }
 
@@ -214,7 +227,6 @@ function updateYAxis() {
     return;
   }
 
-  // ===== AUTO MODE (unchanged) =====
   let min = Infinity;
   let max = -Infinity;
 
@@ -224,7 +236,7 @@ function updateYAxis() {
       return;
     };
 
-    const buffer = dataBuffers[i];
+    const buffer = dataset.data;
     if (!buffer) {
       return;
     };
@@ -247,32 +259,6 @@ function updateYAxis() {
   }
 }
 
-function processSerialData(batch) {
-  if (!isRunning) return;
-
-  for (const values of batch) {
-    if (values.some(isNaN)) continue;
-
-    values.forEach((v, i) => {
-      if (!dataBuffers[i]) return;  // safety
-
-      if (currentSample < maxSamples) {
-        dataBuffers[i][currentSample] = v;
-      } else {
-        dataBuffers[i].shift();
-        dataBuffers[i].push(v);
-      }
-    });
-
-    if (currentSample < maxSamples) {
-      ++currentSample;
-    }
-  }
-
-  updateYAxis();
-  chart.update('none');
-}
-
 function StateUpdated(newState) {
   const ids = [
     'port', 'baudRate', 'dataBits', 'parity', 'stopBits', 'serialRefreshButton'
@@ -283,19 +269,6 @@ function StateUpdated(newState) {
   if (isConnected && !newState.isConnected) {
     // Update serial port list
     SerialTryListPorts();
-  }
-
-  // Detect transition to running state
-  if (!isRunning && newState.isRunning) {
-    // Reset buffers if we have started running successfully
-    currentSample = 0;
-    dataBuffers.forEach((buffer, i) => {
-      const newBuffer = new Array(maxSamples).fill(null);
-      dataBuffers[i] = newBuffer;
-      datasets[i].data = newBuffer;
-    });
-    chart.data.labels = [...Array(maxSamples).keys()];
-    chart.update('none');
   }
 
   // Update current states
@@ -374,6 +347,13 @@ window.addEventListener('DOMContentLoaded', async () => {
   const state = await window.api.GetAppState();
   StateUpdated(state);
 
+  // Update window size
+  const windowSizeElement = document.getElementById('windowSize');
+  const currentValue = parseInt(windowSizeElement.value, 10);
+  if (currentValue !== state.maxSamples) {
+    windowSizeElement.value = state.maxSamples;
+  }
+
   // Force port list refresh if we're not connected
   if (!isConnected) {
     SerialTryListPorts();
@@ -425,10 +405,8 @@ window.addEventListener('DOMContentLoaded', async () => {
   manualYMax = Number(document.getElementById('yMax').value);
   updateYAxisControls();
 
-  // Handle Serial Data
-  window.api.On_SerialDataReady((batch) => {
-    processSerialData(batch);
-  });
+  // Start plotting loop
+  requestAnimationFrame(plotLoop);
 });
 
 window.onload = () => {

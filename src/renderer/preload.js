@@ -13,10 +13,10 @@ contextBridge.exposeInMainWorld('api', {
   RunToggleNotify: (config) => ipcRenderer.invoke('run-toggle-notify'),
   ConfigUpdate: (config) => ipcRenderer.invoke('config-update', config),
   SelectSaveFolder: () => ipcRenderer.invoke('select-save-folder'),
+  GetPlotData: () => ipcRenderer.invoke('plot-data-get'),
+
 
   // Listener API
-  On_SerialDataReady: (callback) =>
-      ipcRenderer.on('serial-data-ready', (_, data) => callback(data)),
   On_StateUpdate: (callback) => {
     ipcRenderer.on('state-update', (_, data) => callback(data));
   }
