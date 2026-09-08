@@ -24,11 +24,16 @@ const chart = new Chart(ctx, {
     interaction: {
       intersect: false,
       mode: 'index',
+      mode: 'nearest',
     },
     plugins: {
       legend: {
+        position: 'right',
+        maxWidth: 250,
         labels: {
           color: '#e5e7eb',
+          boxWidth: 12,
+          padding: 8,
         },
       },
       decimation: {
@@ -44,7 +49,7 @@ const chart = new Chart(ctx, {
         ticks: {
           color: '#94a3b8',
         },
-        type: 'linear'
+        type: 'linear',
       },
       y: {
         grid: {
@@ -241,8 +246,9 @@ function updateYAxis() {
     };
 
     for (const value of buffer) {
-      if (value < min) min = value;
-      if (value > max) max = value;
+      const y = value.y;
+      if (y < min) min = y;
+      if (y > max) max = y;
     }
   });
 
@@ -389,6 +395,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     }
 
     updateYAxisControls();
+    updateYAxis();
     chart.update('none');
   });
   document.getElementById('yMin').onchange = (e) => {
