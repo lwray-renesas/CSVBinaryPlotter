@@ -14,15 +14,17 @@ body {
   font-family: system-ui, sans-serif;
   background: radial-gradient(circle at top left, #1e293b, #0f172a 50%);
   color: var(--text);
-  min-height: 100vh;
+  height: 100vh;
   margin: 0;
   padding: 16px;
+  height: 100%;
+  overflow: hidden;
 }
 
 /* LAYOUT */
 .layout {
   display: flex;
-  gap: 16px;
+  min-height: 0;
   height: calc(100vh - 32px);
 }
 
@@ -35,6 +37,7 @@ body {
   border-radius: var(--radius);
   padding: 18px;
   overflow-y: auto;
+  min-height: 0;
 }
 
 .sidebar.disabled {
@@ -141,6 +144,7 @@ body {
   display: flex;
   flex-direction: column;
   min-height: 0;
+  min-width: 0;
 }
 
 /* TOPBAR */
@@ -148,6 +152,7 @@ body {
   display: flex;
   justify-content: center;
   margin-bottom: 12px;
+  flex-shrink: 0;
 }
 
 .center-controls {
@@ -264,6 +269,7 @@ select:disabled {
   display: flex;
   flex-direction: column;
   min-height: 0;
+  min-width: 0;
 }
 
 /* CHART */
@@ -271,6 +277,7 @@ select:disabled {
   flex: 1;
   position: relative;
   min-height: 0;
+  min-width: 0;
 }
 
 canvas {
