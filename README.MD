@@ -4,7 +4,7 @@
 
 ## Overview
 
-The CSV Binary Plotter is a tool used to stream encoded binary data, CSV formatted, from a serial port and plot it.
+The CSV Binary Plotter is a tool used to stream encoded binary data, CSV formatted, from a serial port or TCP port and plot it.
 It is an electron app, therefore written in a mixture of javascript, html & css.
 The project also comes with an example C code based encoding library used as an example for encoding raw data and transmitting it as per the defined protocol.
 
@@ -61,7 +61,7 @@ The project is structured as follows:
 ### Components
 
 - **Electron App (`src/`)**
-  - Handles serial communication
+  - Handles serial or TCP communications
   - Parses incoming CSV-formatted binary data
   - Plots data in real time
   - Provides a user interface for interaction
@@ -81,6 +81,8 @@ The project is structured as follows:
 - npm (comes with Node.js)
 - OR just download the application from the releases section.
 - A serial device sending properly encoded CSV binary data (see [C/README.MD](C/README.MD) for more information)
+OR
+- A TCP server transmitting CSV Binary Protocol data
 
 ### Installing Source
 
