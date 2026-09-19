@@ -86,6 +86,12 @@
 
     <div class="section-divider"></div>
 
+    <div class="section-title">Signals</div>
+
+    <div id="signalList"></div>
+
+    <div class="section-divider"></div>
+
     <div class="section-title">View</div>
 
     <div class="control-group">
@@ -165,7 +171,18 @@
 </div>
 
 <script src="../../node_modules/chart.js/dist/chart.umd.js"></script>
-<script src="renderer.js"></script>
+<script src="../../node_modules/sortablejs/Sortable.min.js"></script>
+<script type="module" src="renderer.js"></script>
 
 </body>
+
+<template id="signalRowTemplate">
+  <div class="signal-entry">
+    <div class="signal-handle">☰</div>
+    <div class="signal-colour"></div>
+    <div class="signal-name"></div>
+    <div class="axis-toggle"></div>
+  </div>
+</template>
+
 </html>

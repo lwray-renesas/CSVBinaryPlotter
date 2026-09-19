@@ -1,3 +1,8 @@
+
+import {ChartManager} from './util/chartManager.js';
+import {SignalListView} from './util/signalListView.js';
+import {SignalManager} from './util/signalManager.js';
+
 let isRunning = false;
 let isConnected = false;
 let lastParserSignature = '';
@@ -6,82 +11,26 @@ let manualYMin = 0;
 let manualYMax = 100;
 let plotRequestInFlight = false;
 
-const datasets = [];
 
-const ctx = document.getElementById('chart').getContext('2d');
-
-const chart = new Chart(ctx, {
-  type: 'line',
-  data: {
-    labels: [],
-    datasets: [],
-  },
-  options: {
-    responsive: true,
-    maintainAspectRatio: false,
-    animation: false,
-    parsing: false,
-    interaction: {
-      intersect: false,
-      mode: 'index',
-      mode: 'nearest',
-    },
-    plugins: {
-      legend: {
-        position: 'right',
-        maxWidth: 250,
-        labels: {
-          color: '#e5e7eb',
-          boxWidth: 12,
-          padding: 8,
-        },
-      },
-      decimation: {
-        enabled: true,
-        algorithm: 'min-max',
-      },
-    },
-    scales: {
-      x: {
-        grid: {
-          color: 'rgba(255,255,255,0.05)',
-        },
-        ticks: {
-          color: '#94a3b8',
-        },
-        type: 'linear',
-      },
-      y: {
-        grid: {
-          color: 'rgba(255,255,255,0.05)',
-        },
-        ticks: {
-          color: '#94a3b8',
-        },
-      },
-    },
-  },
-});
+const signalManager = new SignalManager();
+let chartManager = null;
+let signalListView = null;
 
 // Helper to update plot datasets
 function updatePlot(rows) {
   if (!rows.length) {
     return;
   }
-  const channels = rows[0].length;
-  for (let c = 0; c < channels; c++) {
-    const dataset = datasets[c];
-    if (!dataset) {
-      continue;
-    }
-    dataset.data.length = 0;
-    for (let i = 0; i < rows.length; i++) {
-      dataset.data.push({x: i, y: rows[i][c]});
-    }
-  }
 
-  updateYAxis();
-  chart.update('none');
+  signalManager.signals.forEach((signal) => {
+    const channel = signal.channelIndex;
+    signal.buffer.length = 0;
+    for (let i = 0; i < rows.length; i++) {
+      signal.buffer.push(rows[i][channel]);
+    }
+  });
+
+  chartManager.synchronise();
 }
 
 // Plots data to the graph
@@ -175,6 +124,12 @@ async function SaveFolderTryBrowse() {
 
 // Change configurations that main needs to be aware of
 async function applyConfig() {
+  if (chartManager) {
+    chartManager.maxSamples = parseInt(
+        document.getElementById('windowSize').value,
+        10,
+    );
+  }
   const config = {
     maxSamples: parseInt(
         document.getElementById('windowSize').value,
@@ -204,24 +159,26 @@ async function applyConfig() {
 
 // Rebuild buffers from parser informations
 function rebuildFromParser(parser) {
-  if (!parser.names?.length || !parser.types?.length) return;
+  if (!parser.names?.length || !parser.types?.length) {
+    return;
+  }
 
-  datasets.length = 0;
+  signalManager.signals.length = 0;
+  signalManager.datasets.length = 0;
+  signalManager.order.length = 0;
 
   parser.names.forEach((name, i) => {
-    datasets.push({
-      label: name,
-      data: [],
-      borderWidth: 2,
-      borderColor: getColour(i),
-      tension: 0.25,
-      pointRadius: 0,
-      spanGap: false,
-    });
+    signalManager.addSignal(
+        name,
+        [],
+        getColour(i),
+    );
+
+    signalManager.getSignal(i).channelIndex = i;
   });
 
-  chart.data.datasets = datasets;
-  chart.update('none');
+  signalListView.rebuild();
+  chartManager.synchronise();
 }
 
 // Helper function to generate a new colour
@@ -230,55 +187,6 @@ function getColour(index) {
   const hue = (index * goldenRatio) % 360;
 
   return `hsl(${hue}, 70%, 55%)`;
-}
-
-// Helper function to modify the axis controls between disabled/enabled when
-// going between auto and manual
-function updateYAxisControls() {
-  document.getElementById('yMin').disabled = autoYAxisEnabled;
-  document.getElementById('yMax').disabled = autoYAxisEnabled;
-}
-
-// Helper function to update the y axis on the chart to scale to min/max data in
-// window
-function updateYAxis() {
-  if (!autoYAxisEnabled) {
-    chart.options.scales.y.min = manualYMin;
-    chart.options.scales.y.max = manualYMax;
-    return;
-  }
-
-  let min = Infinity;
-  let max = -Infinity;
-
-  chart.data.datasets.forEach((dataset, i) => {
-    // Skip hidden datasets
-    if (!chart.isDatasetVisible(i)) {
-      return;
-    };
-
-    const buffer = dataset.data;
-    if (!buffer) {
-      return;
-    };
-
-    for (const value of buffer) {
-      const y = value.y;
-      if (y < min) min = y;
-      if (y > max) max = y;
-    }
-  });
-
-  if (min !== Infinity && max !== -Infinity) {
-    // avoid flat line collapse
-    if (min === max) {
-      min -= 1;
-      max += 1;
-    }
-
-    chart.options.scales.y.min = min;
-    chart.options.scales.y.max = max;
-  }
 }
 
 function StateUpdated(newState) {
@@ -354,9 +262,6 @@ function StateUpdated(newState) {
     document.getElementById('runningStatusText').innerText = 'Stopped';
     document.getElementById('runningStatusDot').classList.remove('on');
   }
-  if (sidebar) {
-    sidebar.classList.toggle('disabled', isRunning);
-  }
 
   // Update savefolder path
   if (newState.saveFolderPath) {
@@ -377,6 +282,42 @@ function StateUpdated(newState) {
 }
 
 window.addEventListener('DOMContentLoaded', async () => {
+  chartManager = new ChartManager(
+      document.getElementById('chart'),
+      signalManager,
+  );
+
+  signalListView = new SignalListView(
+      document.getElementById('signalList'),
+      signalManager,
+      chartManager,
+  );
+
+  Sortable.create(
+      document.getElementById('signalList'),
+      {
+        animation: 150,
+        handle: '.signal-handle',
+        ghostClass: 'signal-drag-ghost',
+        chosenClass: 'signal-drag-chosen',
+        dragClass: 'signal-dragging',
+
+        onEnd: (evt) => {
+          if (evt.oldIndex === evt.newIndex) {
+            return;
+          }
+
+          signalManager.moveSignal(
+              evt.oldIndex,
+              evt.newIndex,
+          );
+
+          chartManager.synchronise();
+          signalListView.rebuild();
+        },
+      },
+  );
+
   // Immediately get the state of the application to process
   const state = await window.api.GetAppState();
   StateUpdated(state);
@@ -386,6 +327,13 @@ window.addEventListener('DOMContentLoaded', async () => {
   const currentValue = parseInt(windowSizeElement.value, 10);
   if (currentValue !== state.maxSamples) {
     windowSizeElement.value = state.maxSamples;
+  }
+
+  if (chartManager) {
+    chartManager.maxSamples = parseInt(
+        document.getElementById('windowSize').value,
+        10,
+    );
   }
 
   // Force port list refresh if we're not connected
@@ -424,34 +372,23 @@ window.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('tcpIp').onchange = applyConfig;
   document.getElementById('tcpPort').onchange = applyConfig;
   document.getElementById('saveFolderPath').onchange = applyConfig;
-  document.getElementById('yAxisToggle').addEventListener('change', (e) => {
-    autoYAxisEnabled = e.target.checked;
-
-    // Freeze current axis values when turning OFF (going manual)
-    if (!autoYAxisEnabled) {
-      manualYMin = chart.options.scales.y.min ?? manualYMin;
-      manualYMax = chart.options.scales.y.max ?? manualYMax;
-
-      document.getElementById('yMin').value = manualYMin;
-      document.getElementById('yMax').value = manualYMax;
-    }
-
-    updateYAxisControls();
-    updateYAxis();
-    chart.update('none');
-  });
+  document.getElementById('yAxisToggle')
+      .addEventListener(
+          'change',
+          (e) => {
+              // TODO: Handle yaxis toggle (auto scale)
+          });
   document.getElementById('yMin').onchange = (e) => {
-    manualYMin = Number(e.target.value);
+    // TODO: Handle yaxis toggle (auto scale)
   };
   document.getElementById('yMax').onchange = (e) => {
-    manualYMax = Number(e.target.value);
+    // TODO: Handle yaxis toggle (auto scale)
   };
 
   // Initialse the axis scaling controls
   autoYAxisEnabled = document.getElementById('yAxisToggle').checked;
   manualYMin = Number(document.getElementById('yMin').value);
   manualYMax = Number(document.getElementById('yMax').value);
-  updateYAxisControls();
 
   // Start plotting loop
   requestAnimationFrame(plotLoop);

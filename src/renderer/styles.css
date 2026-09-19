@@ -338,6 +338,100 @@ input:hover, select:hover {
   display: none;
 }
 
+/* SIGNALS*/
+
+
+/* SIGNALS*/
+.signal-entry {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: rgba(30,41,59,0.5);
+  border: 1px solid rgba(255,255,255,0.05);
+  margin-bottom: 4px;
+  transition:
+    transform 150ms ease,
+    background 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.signal-entry:active {
+  cursor: grabbing;
+}
+
+.signal-entry:hover {
+  background: rgba(255,255,255,0.06);
+}
+
+.signal-dragging {
+  opacity: 0.4;
+}
+
+.signal-drag-chosen {
+  background: rgba(59,130,246,0.15);
+  box-shadow: 0 0 0 1px rgba(59,130,246,0.5);
+}
+
+.signal-drag-ghost {
+  opacity: 0.2;
+  background: rgba(59,130,246,0.2);
+}
+
+.signal-colour {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.signal-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.75rem;
+}
+
+.signal-handle {
+  cursor: grab;
+  color: var(--muted);
+
+  width: 18px;
+  margin-right: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  user-select: none;
+  flex-shrink: 0;
+
+  transition: color 150ms ease;
+}
+
+.signal-handle:hover {
+  color: var(--accent);
+}
+
+.signal-handle:active {
+  cursor: grabbing;
+}
+
+.axis-toggle {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 700;
+  user-select: none;
+}
+
 /* Modern Scrollbars */
 ::-webkit-scrollbar {
   width: 10px;
