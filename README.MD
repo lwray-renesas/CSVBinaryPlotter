@@ -109,7 +109,7 @@ Alternatively you can just pick the installer from the release page and run the 
 
 ## Using the Tool
 
-1. Connect your embedded device to your machine via serial port (USB/UART).
+1. DataConnect your embedded device to your machine via serial port (USB/UART).
 2. Ensure your device is transmitting data using the expected encoding format (see C/ example).
 3. Launch the application.
 4. Select the appropriate serial port & click connect.

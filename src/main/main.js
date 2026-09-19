@@ -1,6 +1,7 @@
 const {app, BrowserWindow, ipcMain, dialog} = require('electron');
 const path = require('path');
 const fs = require('fs');
+const net = require('net');
 
 const {SerialPort} = require('serialport');
 const {Menu} = require('electron');
@@ -8,7 +9,8 @@ const {CsvBinaryParser} = require('./csvbin');
 const {StateManager, defaultState} = require('./state');
 
 let win;
-let port;
+let serialPort;
+let tcpSocket;
 let plotBuffer = [];
 let currentLogFilePath = null;
 let parserReady = false;
@@ -125,6 +127,152 @@ function createMenu() {
   Menu.setApplicationMenu(Menu.buildFromTemplate(template));
 }
 
+async function connectSerial(settings) {
+  try {
+    if (serialPort?.isOpen) {
+      return {
+        success: false,
+        error: 'Port already open',
+      };
+    }
+
+    serialPort = new SerialPort({
+      path: settings.portName,
+      baudRate: Number(settings.baudRate),
+      dataBits: Number(settings.dataBits),
+      stopBits: Number(settings.stopBits),
+      parity: settings.parity,
+      autoOpen: false,
+    });
+
+    // Waits for promise to resolve (i.e., port to open or fail to open)
+    await new Promise((resolve, reject) => {
+      // Calls open and provides callback to handle post call processing (open
+      // vs error) if open failed, an error message is passed and we throw
+      // this with "reject" if open successful, we resolve the promise and
+      // return nothing and move on.
+      serialPort.open((err) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve();
+        }
+      });
+    });
+
+    // dettach data listeners
+    serialPort.removeAllListeners('data');
+
+    // Start listening for data
+    serialPort.on('data', (chunk) => {
+      binaryParser.push(chunk);
+    });
+
+    // Update app state with port information
+    appState.set({
+      isConnected: true,
+      lastError: null,
+      connection: {
+        ...appState.get().connection,
+        type: 'serial',
+        serialSettings: {
+          portName: settings.portName,
+          baudRate: Number(settings.baudRate),
+          dataBits: Number(settings.dataBits),
+          stopBits: Number(settings.stopBits),
+          parity: settings.parity,
+        },
+      },
+    });
+
+    // If we receive an error, handle it.
+    serialPort.on('error', (err) => {
+      console.error('Serial error:', err.message);
+      if (win && !win.isDestroyed()) {
+        appState.set(
+            {isConnected: false, isRunning: false, lastError: err.message});
+      }
+    });
+
+    // If we disconnect, handle it.
+    serialPort.on('close', (err) => {
+      if (win && !win.isDestroyed()) {
+        appState.set({isConnected: false, isRunning: false});
+      }
+    });
+
+  } catch (err) {
+    console.error(err);
+    // Update app state
+    appState.set({isConnected: false, lastError: err.message});
+  }
+}
+
+async function connectTcp(settings) {
+  try {
+    tcpSocket = new net.Socket();
+
+    await new Promise((resolve, reject) => {
+      tcpSocket.connect(
+          settings.port,
+          settings.ip,
+          resolve,
+      );
+
+      tcpSocket.once('error', reject);
+    });
+
+    tcpSocket.on('data', (chunk) => {
+      binaryParser.push(chunk);
+    });
+
+    tcpSocket.on('close', () => {
+      appState.set({
+        isConnected: false,
+        isRunning: false,
+      });
+    });
+
+    tcpSocket.on('error', (err) => {
+      appState.set({
+        isConnected: false,
+        isRunning: false,
+        lastError: err.message,
+      });
+    });
+
+    appState.set({
+      isConnected: true,
+      lastError: null,
+      connection: {
+        ...appState.get().connection,
+        type: 'tcp',
+        tcpSettings: {
+          ip: settings.ip,
+          port: settings.port,
+        },
+      },
+    });
+
+  } catch (err) {
+    tcpSocket = null;
+    appState.set({
+      isConnected: false,
+      lastError: err.message,
+    });
+  }
+}
+
+function writeTransport(data) {
+  if (serialPort?.isOpen) {
+    serialPort.write(data);
+  }
+
+  if (tcpSocket) {
+    tcpSocket.write(data);
+  }
+}
+
 app.commandLine.appendSwitch('remote-debugging-port', '9222');
 
 app.whenReady().then(async () => {
@@ -154,84 +302,30 @@ ipcMain.handle('serial-list-ports', async () => {
   return result;
 });
 
-ipcMain.handle('serial-connect', async (_, settings) => {
-  try {
-    if (port?.isOpen) {
-      return {
-        success: false,
-        error: 'Port already open',
-      };
-    }
-
-    port = new SerialPort({
-      path: settings.portName,
-      baudRate: Number(settings.baudRate),
-      dataBits: Number(settings.dataBits),
-      stopBits: Number(settings.stopBits),
-      parity: settings.parity,
-      autoOpen: false,
-    });
-
-    // Waits for promise to resolve (i.e., port to open or fail to open)
-    await new Promise((resolve, reject) => {
-      // Calls open and provides callback to handle post call processing (open
-      // vs error) if open failed, an error message is passed and we throw
-      // this with "reject" if open successful, we resolve the promise and
-      // return nothing and move on.
-      port.open((err) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve();
-        }
-      });
-    });
-
-    // dettach data listeners
-    port.removeAllListeners('data');
-
-    // Start listening for data
-    port.on('data', (chunk) => {
-      binaryParser.push(chunk);
-    });
-
-    // Update app state with port information
-    appState.set({isConnected: true, port: {...settings}, lastError: null});
-
-    // If we receive an error, handle it.
-    port.on('error', (err) => {
-      console.error('Serial error:', err.message);
-      if (win && !win.isDestroyed()) {
-        appState.set(
-            {isConnected: false, isRunning: false, lastError: err.message});
-      }
-    });
-
-    // If we disconnect, handle it.
-    port.on('close', (err) => {
-      if (win && !win.isDestroyed()) {
-        appState.set({isConnected: false, isRunning: false});
-      }
-    });
-
-  } catch (err) {
-    console.error(err);
-    // Update app state
-    appState.set({isConnected: false, lastError: err.message});
+ipcMain.handle('data-connect', async (_, settings) => {
+  if (settings.connectionType === 'serial') {
+    return await connectSerial(settings);
   }
+
+  if (settings.connectionType === 'tcp') {
+    return await connectTcp(settings);
+  }
+
+  throw new Error(`Unsupported connection type: ${settings.connectionType}`);
 });
 
-ipcMain.handle('serial-disconnect', async () => {
+ipcMain.handle('data-disconnect', async () => {
   try {
-    // try close the port.
-    if (port?.isOpen) {
-      // dettach data listeners
-      port.removeAllListeners('data');
-      port.close();
+    if (serialPort?.isOpen) {
+      serialPort.removeAllListeners('data');
+      serialPort.close();
+      serialPort = null;
     }
-
-    // Destroy the objects.
-    port = null;
+    if (tcpSocket) {
+      tcpSocket.removeAllListeners();
+      tcpSocket.destroy();
+      tcpSocket = null;
+    }
 
     // Update app state
     appState.set({isConnected: false, isRunning: false});
@@ -245,7 +339,9 @@ ipcMain.handle('serial-disconnect', async () => {
 });
 
 ipcMain.handle('run-toggle-notify', async () => {
-  if (!port) return;
+  if (!serialPort && !tcpSocket) {
+    return;
+  }
 
   appState.set({isRunning: !(appState.get().isRunning)});
   const state = appState.get();
@@ -269,7 +365,7 @@ ipcMain.handle('run-toggle-notify', async () => {
     }
 
     // Request metadata
-    port.write('M');
+    writeTransport('M');
 
   } else {
     currentLogFilePath = null;
@@ -279,15 +375,27 @@ ipcMain.handle('run-toggle-notify', async () => {
 
 ipcMain.handle('config-update', async (_, config) => {
   try {
+    if (config.connection) {
+      const current = appState.get();
+      appState.set({
+        connection: {
+          ...current.connection,
+          ...config.connection,
+        },
+      });
+    }
+
     // Update baud rate if possible
-    if (port && port.isOpen) {
+    if (serialPort && serialPort.isOpen && config.connection?.serialSettings) {
       await new Promise((resolve, reject) => {
-        port.update({baudRate: Number(config.portSettings.baudRate)}, (err) => {
-          if (err)
-            reject(err);
-          else
-            resolve();
-        });
+        serialPort.update(
+            {baudRate: Number(config.connection.serialSettings.baudRate)},
+            (err) => {
+              if (err)
+                reject(err);
+              else
+                resolve();
+            });
       });
     }
 
@@ -311,7 +419,10 @@ ipcMain.handle('plot-data-get', async () => {
 });
 
 app.on('before-quit', () => {
-  if (port && port.isOpen) {
-    port.close();
+  if (serialPort && serialPort.isOpen) {
+    serialPort.close();
+  }
+  if (tcpSocket) {
+    tcpSocket.destroy();
   }
 });

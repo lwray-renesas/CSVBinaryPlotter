@@ -4,12 +4,19 @@ const defaultState = {
   isConnected: false,
   isRunning: false,
 
-  port: {
-    portName: null,
-    baudRate: 115200,
-    dataBits: 8,
-    stopBits: 1,
-    parity: 'none',
+  connection: {
+    type: 'serial',
+    serialSettings: {
+      portName: null,
+      baudRate: 115200,
+      dataBits: 8,
+      stopBits: 1,
+      parity: 'none',
+    },
+    tcpSettings: {
+      ip: '127.0.0.1',
+      port: 50023,
+    },
   },
 
   maxSamples: 200,

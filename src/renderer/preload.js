@@ -7,9 +7,14 @@ const {
 contextBridge.exposeInMainWorld('api', {
   // Invocation API
   GetAppState: () => ipcRenderer.invoke('state-get'),
+
+  // Serial Ports (COM)
   SerialListPorts: () => ipcRenderer.invoke('serial-list-ports'),
-  SerialConnect: (settings) => ipcRenderer.invoke('serial-connect', settings),
-  SerialDisconnect: () => ipcRenderer.invoke('serial-disconnect'),
+
+  // Generic DataConnect/DataDisconnect
+  DataConnect: (settings) => ipcRenderer.invoke('data-connect', settings),
+  DataDisconnect: () => ipcRenderer.invoke('data-disconnect'),
+
   RunToggleNotify: (config) => ipcRenderer.invoke('run-toggle-notify'),
   ConfigUpdate: (config) => ipcRenderer.invoke('config-update', config),
   SelectSaveFolder: () => ipcRenderer.invoke('select-save-folder'),

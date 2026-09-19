@@ -16,47 +16,73 @@
   <!-- SIDEBAR -->
   <div class="sidebar">
 
-    <div class="section-title">Serial</div>
-
     <div class="control-group">
-      <label>Port</label>
-      <select id="port"></select>
-    </div>
+      <div class="section-title">Connection</div>
 
-    <div class="control-group">
-      <label>Baud Rate</label>
-      <input id="baudRate" type="number" value="115200" />
-    </div>
-
-    <div class="inline-controls">
-      <div class="control-group compact">
-        <label>Data Bits</label>
-        <select id="dataBits">
-          <option value="8">8</option>
-          <option value="7">7</option>
+      <div class="control-group">
+        <label>Type</label>
+        <select id="connectionType">
+          <option value="serial">Serial</option>
+          <option value="tcp">TCP</option>
         </select>
       </div>
+      
 
-      <div class="control-group compact">
-        <label>Parity</label>
-        <select id="parity">
-          <option value="none">None</option>
-          <option value="odd">Odd</option>
-          <option value="even">Even</option>
-        </select>
+      <div id="serialControls">
+        <div class="control-group">
+          <label>Port</label>
+          <select id="port"></select>
+        </div>
+
+        <div class="control-group">
+          <label>Baud Rate</label>
+          <input id="baudRate" type="number" value="115200" />
+        </div>
+
+        <div class="inline-controls">
+          <div class="control-group compact">
+            <label>Data Bits</label>
+            <select id="dataBits">
+              <option value="8">8</option>
+              <option value="7">7</option>
+            </select>
+          </div>
+
+          <div class="control-group compact">
+            <label>Parity</label>
+            <select id="parity">
+              <option value="none">None</option>
+              <option value="odd">Odd</option>
+              <option value="even">Even</option>
+            </select>
+          </div>
+
+          <div class="control-group compact">
+            <label>Stop Bits</label>
+            <select id="stopBits">
+              <option value="1">1</option>
+              <option value="2">2</option>
+            </select>
+          </div>
+        </div>
+        <button id="serialRefreshButton" class="btn secondary">Refresh</button>
       </div>
 
-      <div class="control-group compact">
-        <label>Stop Bits</label>
-        <select id="stopBits">
-          <option value="1">1</option>
-          <option value="2">2</option>
-        </select>
+      <div id="tcpControls" class="hidden">
+        <div class="control-group">
+          <label>IP Address</label>
+          <input id="tcpIp" type="text" value="127.0.0.1" />
+        </div>
+
+        <div class="control-group">
+          <label>Port</label>
+          <input id="tcpPort" type="number" value="50023" />
+        </div>
       </div>
+      
+      <button id="connectButton" class="btn primary">Connect</button>
+    
     </div>
-
-    <button id="serialConnectButton" class="btn primary">Connect</button>
-    <button id="serialRefreshButton" class="btn secondary">Refresh</button>
 
     <div class="section-divider"></div>
 

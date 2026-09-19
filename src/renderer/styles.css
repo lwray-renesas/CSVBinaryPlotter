@@ -184,6 +184,7 @@ body {
 
 /* BUTTONS */
 .btn {
+  width: 100%;
   border: none;
   padding: 10px 14px;
   border-radius: 10px;
@@ -330,6 +331,11 @@ input:hover, select:hover {
   height: 1px;
   background: rgba(255,255,255,0.08);
   margin: 18px 0;
+}
+
+/* Generic hidden class to avoid inline css*/
+.hidden {
+  display: none;
 }
 
 /* Modern Scrollbars */

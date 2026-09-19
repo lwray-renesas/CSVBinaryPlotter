@@ -117,26 +117,40 @@ async function SerialTryListPorts() {
   });
 }
 
-// Trys connect to (or disconnect from) serial port.
-async function SerialTryConnect() {
-  document.getElementById('serialConnectButton').disabled = true;
-  if (isConnected) {
-    document.getElementById('serialConnectButton').innerText =
-        'Disconnecting...';
-    await window.api.SerialDisconnect();
-  } else {
-    const settings = {
-      portName: document.getElementById('port').value,
-      baudRate: document.getElementById('baudRate').value,
-      dataBits: document.getElementById('dataBits').value,
-      stopBits: document.getElementById('stopBits').value,
-      parity: document.getElementById('parity').value
-    };
-    document.getElementById('serialConnectButton').innerText = 'Connecting...';
+// Trys connect to (or disconnect from) data link.
+async function DataTryConnect() {
+  const type = document.getElementById('connectionType').value;
+  document.getElementById('connectButton').disabled = true;
 
-    await window.api.SerialConnect(settings);
+  try {
+    if (isConnected) {
+      document.getElementById('connectButton').innerText = 'Disconnecting...';
+      await window.api.DataDisconnect();
+    } else {
+      let settings;
+      if (type === 'serial') {
+        settings = {
+          connectionType: 'serial',
+          portName: document.getElementById('port').value,
+          baudRate: document.getElementById('baudRate').value,
+          dataBits: document.getElementById('dataBits').value,
+          stopBits: document.getElementById('stopBits').value,
+          parity: document.getElementById('parity').value
+        };
+      } else {
+        settings = {
+          connectionType: 'tcp',
+          ip: document.getElementById('tcpIp').value,
+          port: Number(document.getElementById('tcpPort').value)
+        };
+      }
+      document.getElementById('connectButton').innerText = 'Connecting...';
+      await window.api.DataConnect(settings);
+    }
+
+  } finally {
+    document.getElementById('connectButton').disabled = false;
   }
-  document.getElementById('serialConnectButton').disabled = false;
 }
 
 // Function to wait for a save folder to be selected
@@ -161,25 +175,28 @@ async function SaveFolderTryBrowse() {
 
 // Change configurations that main needs to be aware of
 async function applyConfig() {
-  const localMaxSamples =
-      parseInt(document.getElementById('windowSize').value, 10);
-
-  if (Number.isNaN(localMaxSamples) || localMaxSamples < 1) {
-    return;
-  }
-
-  // Inform main process of config update
-  const settings = {
-    portName: document.getElementById('port').value,
-    baudRate: document.getElementById('baudRate').value,
-    dataBits: document.getElementById('dataBits').value,
-    stopBits: document.getElementById('stopBits').value,
-    parity: document.getElementById('parity').value,
-  };
-
   const config = {
-    portSettings: settings,
-    maxSamples: localMaxSamples,
+    maxSamples: parseInt(
+        document.getElementById('windowSize').value,
+        10,
+        ),
+
+    connection: {
+      type: document.getElementById('connectionType').value,
+
+      serialSettings: {
+        portName: document.getElementById('port').value,
+        baudRate: Number(document.getElementById('baudRate').value),
+        dataBits: Number(document.getElementById('dataBits').value),
+        stopBits: Number(document.getElementById('stopBits').value),
+        parity: document.getElementById('parity').value,
+      },
+
+      tcpSettings: {
+        ip: document.getElementById('tcpIp').value,
+        port: Number(document.getElementById('tcpPort').value),
+      },
+    },
   };
 
   await window.api.ConfigUpdate(config);
@@ -266,12 +283,14 @@ function updateYAxis() {
 
 function StateUpdated(newState) {
   const ids = [
-    'port', 'baudRate', 'dataBits', 'parity', 'stopBits', 'serialRefreshButton'
+    'port', 'baudRate', 'dataBits', 'parity', 'stopBits', 'serialRefreshButton',
+    'connectionType'
   ];
   const sidebar = document.querySelector('.sidebar');
 
   // Detect disconnection
-  if (isConnected && !newState.isConnected) {
+  if (isConnected && !newState.isConnected &&
+      'serial' === newState.connection.type) {
     // Update serial port list
     SerialTryListPorts();
   }
@@ -282,22 +301,34 @@ function StateUpdated(newState) {
 
   // Connected checks
   if (isConnected) {
-    document.getElementById('serialConnectButton').innerText = 'Disconnect';
-    document.getElementById('serialConnectButton')
-        .classList.remove('primary-btn');
-    document.getElementById('serialConnectButton').classList.add('danger');
+    document.getElementById('connectButton').innerText = 'Disconnect';
+    document.getElementById('connectButton').classList.remove('primary-btn');
+    document.getElementById('connectButton').classList.add('danger');
     document.getElementById('connectionStatusText').innerText = 'Connected';
     document.getElementById('connectionStatusDot').classList.add('on');
     document.getElementById('runToggleButton').disabled = false;
-    document.getElementById('port').value = newState.port.portName;
-    document.getElementById('baudRate').value = newState.port.baudRate;
-    document.getElementById('dataBits').value = newState.port.dataBits;
-    document.getElementById('stopBits').value = newState.port.stopBits;
-    document.getElementById('parity').value = newState.port.parity;
+    const serialSettings = newState.connection.serialSettings;
+    const tcpSettings = newState.connection.tcpSettings;
+    document.getElementById('port').value = serialSettings.portName ?? '';
+    document.getElementById('baudRate').value = serialSettings.baudRate;
+    document.getElementById('dataBits').value = serialSettings.dataBits;
+    document.getElementById('stopBits').value = serialSettings.stopBits;
+    document.getElementById('parity').value = serialSettings.parity;
+    document.getElementById('connectionType').value = newState.connection.type;
+    document.getElementById('tcpIp').value = tcpSettings.ip;
+    document.getElementById('tcpPort').value = tcpSettings.port;
+    document.getElementById('connectionType').value = newState.connection.type;
+    if (newState.connection.type === 'serial') {
+      document.getElementById('serialControls').classList.remove('hidden');
+      document.getElementById('tcpControls').classList.add('hidden');
+    } else {
+      document.getElementById('serialControls').classList.add('hidden');
+      document.getElementById('tcpControls').classList.remove('hidden');
+    }
   } else {
-    document.getElementById('serialConnectButton').innerText = 'Connect';
-    document.getElementById('serialConnectButton').classList.remove('danger');
-    document.getElementById('serialConnectButton').classList.add('primary-btn');
+    document.getElementById('connectButton').innerText = 'Connect';
+    document.getElementById('connectButton').classList.remove('danger');
+    document.getElementById('connectButton').classList.add('primary-btn');
     document.getElementById('connectionStatusText').innerText = 'Disconnected';
     document.getElementById('connectionStatusDot').classList.remove('on');
     document.getElementById('runToggleButton').disabled = true;
@@ -339,8 +370,6 @@ function StateUpdated(newState) {
   // Create a simple “signature” to detect change
   const signature = JSON.stringify(parser);
 
-  console.log(signature);
-
   if (signature !== lastParserSignature) {
     lastParserSignature = signature;
     rebuildFromParser(parser);
@@ -369,8 +398,19 @@ window.addEventListener('DOMContentLoaded', async () => {
     StateUpdated(newState);
   });
 
+
   // Add events listeners to UI
-  document.getElementById('serialConnectButton').onclick = SerialTryConnect;
+  document.getElementById('connectionType').addEventListener('change', () => {
+    if (document.getElementById('connectionType').value === 'serial') {
+      document.getElementById('serialControls').classList.remove('hidden');
+      document.getElementById('tcpControls').classList.add('hidden');
+    } else {
+      document.getElementById('serialControls').classList.add('hidden');
+      document.getElementById('tcpControls').classList.remove('hidden');
+    }
+    applyConfig();
+  });
+  document.getElementById('connectButton').onclick = DataTryConnect;
   document.getElementById('serialRefreshButton').onclick = SerialTryListPorts;
   document.getElementById('runToggleButton').onclick = () => {
     window.api.RunToggleNotify()
@@ -381,6 +421,8 @@ window.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('dataBits').onchange = applyConfig;
   document.getElementById('parity').onchange = applyConfig;
   document.getElementById('stopBits').onchange = applyConfig;
+  document.getElementById('tcpIp').onchange = applyConfig;
+  document.getElementById('tcpPort').onchange = applyConfig;
   document.getElementById('saveFolderPath').onchange = applyConfig;
   document.getElementById('yAxisToggle').addEventListener('change', (e) => {
     autoYAxisEnabled = e.target.checked;
