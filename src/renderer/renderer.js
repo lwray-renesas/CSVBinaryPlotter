@@ -6,11 +6,8 @@ import {SignalManager} from './util/signalManager.js';
 let isRunning = false;
 let isConnected = false;
 let lastParserSignature = '';
-let autoYAxisEnabled = true;
-let manualYMin = 0;
-let manualYMax = 100;
 let plotRequestInFlight = false;
-
+let resizingSidebar = false;
 
 const signalManager = new SignalManager();
 let chartManager = null;
@@ -31,6 +28,7 @@ function updatePlot(rows) {
   });
 
   chartManager.synchronise();
+  updateAxisControlsVisibility();
 }
 
 // Plots data to the graph
@@ -155,6 +153,21 @@ async function applyConfig() {
   };
 
   await window.api.ConfigUpdate(config);
+}
+
+// Helper to update axis options
+function updateAxisControlsVisibility() {
+  document.getElementById('yControls')
+      .classList.toggle(
+          'hidden',
+          !chartManager.isYAxisUsed(),
+      );
+
+  document.getElementById('y1Controls')
+      .classList.toggle(
+          'hidden',
+          !chartManager.isY1AxisUsed(),
+      );
 }
 
 // Rebuild buffers from parser informations
@@ -329,6 +342,41 @@ window.addEventListener('DOMContentLoaded', async () => {
     windowSizeElement.value = state.maxSamples;
   }
 
+  // Handle resizing
+  const sidebar = document.getElementById('sidebar');
+  const resizeHandle = document.getElementById('sidebarResizeHandle');
+
+  resizeHandle.addEventListener('mousedown', () => {
+    resizingSidebar = true;
+    document.body.classList.add('resizing');
+  });
+
+  window.addEventListener('mousemove', (e) => {
+    if (!resizingSidebar) {
+      return;
+    }
+    if ((e.buttons & 1) === 0) {
+      resizingSidebar = false;
+      document.body.classList.remove('resizing');
+      return;
+    }
+
+    const left = sidebar.parentElement.getBoundingClientRect().left;
+    const width = Math.max(
+        220,
+        Math.min(600, e.clientX - left),
+    );
+
+    sidebar.style.width = `${width}px`;
+    sidebar.style.flexBasis = `${width}px`;
+    chartManager.chart.resize();
+  });
+
+  window.addEventListener('mouseup', () => {
+    resizingSidebar = false;
+    document.body.classList.remove('resizing');
+  });
+
   if (chartManager) {
     chartManager.maxSamples = parseInt(
         document.getElementById('windowSize').value,
@@ -372,23 +420,36 @@ window.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('tcpIp').onchange = applyConfig;
   document.getElementById('tcpPort').onchange = applyConfig;
   document.getElementById('saveFolderPath').onchange = applyConfig;
-  document.getElementById('yAxisToggle')
-      .addEventListener(
-          'change',
-          (e) => {
-              // TODO: Handle yaxis toggle (auto scale)
-          });
+  document.getElementById('yAuto').addEventListener('change', (e) => {
+    chartManager.yAuto = e.target.checked;
+    document.getElementById('yMin').disabled = e.target.checked;
+    document.getElementById('yMax').disabled = e.target.checked;
+    chartManager.synchronise();
+  });
   document.getElementById('yMin').onchange = (e) => {
-    // TODO: Handle yaxis toggle (auto scale)
+    chartManager.yMin = Number(e.target.value);
+    chartManager.synchronise();
   };
   document.getElementById('yMax').onchange = (e) => {
-    // TODO: Handle yaxis toggle (auto scale)
+    chartManager.yMax = Number(e.target.value);
+    chartManager.synchronise();
   };
 
-  // Initialse the axis scaling controls
-  autoYAxisEnabled = document.getElementById('yAxisToggle').checked;
-  manualYMin = Number(document.getElementById('yMin').value);
-  manualYMax = Number(document.getElementById('yMax').value);
+  document.getElementById('y1Auto').addEventListener('change', (e) => {
+    chartManager.y1Auto = e.target.checked;
+    document.getElementById('y1Min').disabled = e.target.checked;
+    document.getElementById('y1Max').disabled = e.target.checked;
+    chartManager.synchronise();
+  });
+  document.getElementById('y1Min').onchange = (e) => {
+    console.log(Number(e.target.value));
+    chartManager.y1Min = Number(e.target.value);
+    chartManager.synchronise();
+  };
+  document.getElementById('y1Max').onchange = (e) => {
+    chartManager.y1Max = Number(e.target.value);
+    chartManager.synchronise();
+  };
 
   // Start plotting loop
   requestAnimationFrame(plotLoop);

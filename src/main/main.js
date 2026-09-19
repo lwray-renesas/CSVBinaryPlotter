@@ -110,9 +110,12 @@ function createWindow() {
     },
   });
 
-  win.maximize();
-
   win.loadFile(path.join(__dirname, '../renderer/index.html'));
+
+  win.once('ready-to-show', () => {
+    win.maximize();
+    win.show();
+  });
 }
 
 function createMenu() {

@@ -31,6 +31,8 @@ body {
 /* SIDEBAR */
 .sidebar {
   flex: 0 0 260px;
+  min-width: 220px;
+  max-width: 600px;
   width: 260px;
   background: rgba(17,24,39,0.75);
   border: 1px solid rgba(255,255,255,0.08);
@@ -123,10 +125,28 @@ body {
   flex: 0 0 auto;
 }
 
+/* SIDEBAR*/
+#sidebarResizeHandle {
+  width: 6px;
+  cursor: ew-resize;
+  flex-shrink: 0;
+
+  background: transparent;
+  transition: background 0.15s ease;
+}
+
+#sidebarResizeHandle:hover {
+  background: rgba(59,130,246,0.4);
+}
+
+body.resizing {
+  cursor: ew-resize;
+  user-select: none;
+}
+
 /* Make inputs share remaining space evenly */
-#yMin, #yMax {
+#yMin, #yMax, #y1min, #y1max {
   flex: 1;
-  min-width: 0; /* prevents overflow weirdness */
 }
 
 /* VERSION*/
@@ -430,6 +450,31 @@ input:hover, select:hover {
   font-size: 0.75rem;
   font-weight: 700;
   user-select: none;
+}
+
+.axis-panel {
+  background: rgba(30,41,59,0.4);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 10px;
+  padding: 10px;
+  margin-bottom: 10px;
+}
+
+.axis-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  font-weight: 600;
+}
+
+.axis-range {
+  display: flex;
+  gap: 4%;
+}
+
+.axis-range .control-group {
+  width: 48%;
 }
 
 /* Modern Scrollbars */

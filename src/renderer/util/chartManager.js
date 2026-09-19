@@ -3,6 +3,13 @@ export class ChartManager {
     this.maxSamples = maxSamples;
     this.signalManager = signalManager;
     this.updatePending = false;
+    this.yAuto = true;
+    this.yMin = 0;
+    this.yMax = 100;
+    this.y1Auto = true;
+    this.y1Min = 0;
+    this.y1Max = 100;
+
     this.chart = new Chart(canvas.getContext('2d'), {
       type: 'line',
       data: {
@@ -86,20 +93,51 @@ export class ChartManager {
     });
   }
 
+  // Updates y axis scaling parameters.
+  updateAxisScaling() {
+    const y = this.chart.options.scales.y;
+    const y1 = this.chart.options.scales.y1;
+
+    if (this.yAuto) {
+      delete y.min;
+      delete y.max;
+    } else {
+      y.min = Math.min(this.yMin, this.yMax);
+      y.max = Math.max(this.yMin, this.yMax);
+    }
+
+    if (this.y1Auto) {
+      delete y1.min;
+      delete y1.max;
+    } else {
+      y1.min = Math.min(this.y1Min, this.y1Max);
+      y1.max = Math.max(this.y1Min, this.y1Max);
+    }
+  }
+
   // Gets chart canvas context for application to use for interaction handlers.
   getCanvas() {
     return this.chart.canvas;
   }
 
+  isYAxisUsed() {
+    return this.signalManager.datasets.some(ds => ds.yAxisID === 'y');
+  }
+
+  isY1AxisUsed() {
+    return this.signalManager.datasets.some(ds => ds.yAxisID === 'y1');
+  }
+
   // resynchronises the data between SignalManager and ChartManager
   // Effectively force refreshing the displayed data.
   synchronise() {
-    // Only display the y1 axis if a set is using it.
-    this.chart.options.scales.y1.display =
-        this.signalManager.datasets.some(ds => ds.yAxisID === 'y1');
     // Only display the y axis if a set is using it.
-    this.chart.options.scales.y.display =
-        this.signalManager.datasets.some(ds => ds.yAxisID === 'y');
+    this.chart.options.scales.y.display = this.isYAxisUsed();
+    // Only display the y1 axis if a set is using it.
+    this.chart.options.scales.y1.display = this.isY1AxisUsed();
+
+    // Fix y axis scales
+    this.updateAxisScaling();
 
     // Fully rebuild the data from the buffers
     this.rebuildBuffers();

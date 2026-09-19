@@ -14,7 +14,7 @@
 <div class="app layout">
 
   <!-- SIDEBAR -->
-  <div class="sidebar">
+  <div id="sidebar" class="sidebar">
 
     <div class="control-group">
       <div class="section-title">Connection</div>
@@ -99,20 +99,66 @@
       <input id="windowSize" type="number" value="200" title="Recommended range: 10 to 10,000"/>
     </div>
 
-    <div class="control-group">
-      <label>Auto Scale</label>
+    <div id="yControls" class="axis-panel">
 
-      <div class="inline-controls">
-        <label class="toggle">
-          <input type="checkbox" id="yAxisToggle" checked />
-          <span class="slider"></span>
-        </label>
+      <div class="axis-header">
+        <span>Left Axis</span>
 
-        <label>Min:</label>
-        <input id="yMin" type="number" value="0" />
-        <label>Max:</label>
-        <input id="yMax" type="number" value="100" />
+        <div class="inline-controls">
+          <span>Auto</span>
+
+          <label class="toggle">
+            <input type="checkbox" id="yAuto" checked />
+            <span class="slider"></span>
+          </label>
+        </div>
       </div>
+
+      <div class="axis-range">
+
+        <div class="control-group">
+          <label>Min</label>
+          <input id="yMin" type="number" value="0" />
+        </div>
+
+        <div class="control-group">
+          <label>Max</label>
+          <input id="yMax" type="number" value="100" />
+        </div>
+
+      </div>
+
+    </div>
+
+    <div id="y1Controls" class="axis-panel hidden">
+
+      <div class="axis-header">
+        <span>Right Axis</span>
+
+        <div class="inline-controls">
+          <span>Auto</span>
+
+          <label class="toggle">
+            <input type="checkbox" id="y1Auto" checked />
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <div class="axis-range">
+
+        <div class="control-group">
+          <label>Min</label>
+          <input id="y1Min" type="number" value="0" />
+        </div>
+
+        <div class="control-group">
+          <label>Max</label>
+          <input id="y1Max" type="number" value="100" />
+        </div>
+
+      </div>
+
     </div>
 
     <div class="section-divider"></div>
@@ -128,10 +174,12 @@
     </div>
 
     <div class="app-version">
-      v1.7.1
+      v1.8.0
     </div>
 
   </div>
+
+  <div id="sidebarResizeHandle"></div>
 
   <!-- MAIN -->
   <div class="main">
