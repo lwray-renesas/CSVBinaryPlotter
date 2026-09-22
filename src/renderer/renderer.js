@@ -8,6 +8,8 @@ let isConnected = false;
 let lastParserSignature = '';
 let plotRequestInFlight = false;
 let resizingSidebar = false;
+let startX = 0;
+let startWidth = 0;
 
 const signalManager = new SignalManager();
 let chartManager = null;
@@ -356,8 +358,10 @@ window.addEventListener('DOMContentLoaded', async () => {
   const sidebar = document.getElementById('sidebar');
   const resizeHandle = document.getElementById('sidebarResizeHandle');
 
-  resizeHandle.addEventListener('mousedown', () => {
+  resizeHandle.addEventListener('mousedown', (e) => {
     resizingSidebar = true;
+    startX = e.clientX;
+    startWidth = sidebar.offsetWidth;
     document.body.classList.add('resizing');
   });
 
@@ -371,14 +375,18 @@ window.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
-    const left = sidebar.parentElement.getBoundingClientRect().left;
+    const deltaX = e.clientX - startX;
     const width = Math.max(
         220,
-        Math.min(600, e.clientX - left),
+        Math.min(
+            600,
+            startWidth + deltaX,
+            ),
     );
 
     sidebar.style.width = `${width}px`;
     sidebar.style.flexBasis = `${width}px`;
+
     chartManager.chart.resize();
   });
 
