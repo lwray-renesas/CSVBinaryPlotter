@@ -202,6 +202,16 @@ function getColour(index) {
   return `hsl(${hue}, 70%, 55%)`;
 }
 
+function updateAxisUi() {
+  const yAuto = document.getElementById('yAuto').checked;
+  document.getElementById('yMin').disabled = yAuto;
+  document.getElementById('yMax').disabled = yAuto;
+
+  const y1Auto = document.getElementById('y1Auto').checked;
+  document.getElementById('y1Min').disabled = y1Auto;
+  document.getElementById('y1Max').disabled = y1Auto;
+}
+
 function StateUpdated(newState) {
   const ids = [
     'port', 'baudRate', 'dataBits', 'parity', 'stopBits', 'serialRefreshButton',
@@ -420,10 +430,10 @@ window.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('tcpIp').onchange = applyConfig;
   document.getElementById('tcpPort').onchange = applyConfig;
   document.getElementById('saveFolderPath').onchange = applyConfig;
+
   document.getElementById('yAuto').addEventListener('change', (e) => {
     chartManager.yAuto = e.target.checked;
-    document.getElementById('yMin').disabled = e.target.checked;
-    document.getElementById('yMax').disabled = e.target.checked;
+    updateAxisUi();
     chartManager.synchronise();
   });
   document.getElementById('yMin').onchange = (e) => {
@@ -435,10 +445,10 @@ window.addEventListener('DOMContentLoaded', async () => {
     chartManager.synchronise();
   };
 
+
   document.getElementById('y1Auto').addEventListener('change', (e) => {
     chartManager.y1Auto = e.target.checked;
-    document.getElementById('y1Min').disabled = e.target.checked;
-    document.getElementById('y1Max').disabled = e.target.checked;
+    updateAxisUi();
     chartManager.synchronise();
   });
   document.getElementById('y1Min').onchange = (e) => {
@@ -450,6 +460,9 @@ window.addEventListener('DOMContentLoaded', async () => {
     chartManager.y1Max = Number(e.target.value);
     chartManager.synchronise();
   };
+
+  // Initial state of axis controls
+  updateAxisUi();
 
   // Start plotting loop
   requestAnimationFrame(plotLoop);
