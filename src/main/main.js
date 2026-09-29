@@ -46,11 +46,10 @@ function generateErrorFilePath(folder) {
   const pad = (n) => n.toString().padStart(2, '0');
 
   const ts =
-      `ErrorLog_` +
       `${pad(now.getDate())}_${pad(now.getMonth() + 1)}_${now.getFullYear()}_` +
       `${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
 
-  return path.join(folder, `data_${ts}.csv`);
+  return path.join(folder, `error_${ts}.txt`);
 }
 
 function pushPlotRow(values) {
