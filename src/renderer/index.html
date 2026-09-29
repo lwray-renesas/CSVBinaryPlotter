@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
-  <meta http-equiv="Content-Security-Policy"
-        content="default-src 'self'; script-src 'self'; style-src 'self';" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self';" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>CSV Binary Plotter</title>
   <link rel="stylesheet" href="styles.css" />
@@ -11,216 +11,216 @@
 
 <body>
 
-<div class="app layout">
+  <div class="app layout">
 
-  <!-- SIDEBAR -->
-  <div id="sidebar" class="sidebar">
-
-    <div class="control-group">
-      <div class="section-title">Connection</div>
+    <!-- SIDEBAR -->
+    <div id="sidebar" class="sidebar">
 
       <div class="control-group">
-        <label>Type</label>
-        <select id="connectionType">
-          <option value="serial">Serial</option>
-          <option value="tcp">TCP</option>
-        </select>
-      </div>
-      
-
-      <div id="serialControls">
-        <div class="control-group">
-          <label>Port</label>
-          <select id="port"></select>
-        </div>
+        <div class="section-title">Connection</div>
 
         <div class="control-group">
-          <label>Baud Rate</label>
-          <input id="baudRate" type="number" value="115200" />
+          <label>Type</label>
+          <select id="connectionType">
+            <option value="serial">Serial</option>
+            <option value="tcp">TCP</option>
+          </select>
         </div>
 
-        <div class="inline-controls">
-          <div class="control-group compact">
-            <label>Data Bits</label>
-            <select id="dataBits">
-              <option value="8">8</option>
-              <option value="7">7</option>
-            </select>
+
+        <div id="serialControls">
+          <div class="control-group">
+            <label>Port</label>
+            <select id="port"></select>
           </div>
 
-          <div class="control-group compact">
-            <label>Parity</label>
-            <select id="parity">
-              <option value="none">None</option>
-              <option value="odd">Odd</option>
-              <option value="even">Even</option>
-            </select>
+          <div class="control-group">
+            <label>Baud Rate</label>
+            <input id="baudRate" type="number" value="115200" />
           </div>
 
-          <div class="control-group compact">
-            <label>Stop Bits</label>
-            <select id="stopBits">
-              <option value="1">1</option>
-              <option value="2">2</option>
-            </select>
+          <div class="inline-controls">
+            <div class="control-group compact">
+              <label>Data Bits</label>
+              <select id="dataBits">
+                <option value="8">8</option>
+                <option value="7">7</option>
+              </select>
+            </div>
+
+            <div class="control-group compact">
+              <label>Parity</label>
+              <select id="parity">
+                <option value="none">None</option>
+                <option value="odd">Odd</option>
+                <option value="even">Even</option>
+              </select>
+            </div>
+
+            <div class="control-group compact">
+              <label>Stop Bits</label>
+              <select id="stopBits">
+                <option value="1">1</option>
+                <option value="2">2</option>
+              </select>
+            </div>
+          </div>
+          <button id="serialRefreshButton" class="btn secondary">Refresh</button>
+        </div>
+
+        <div id="tcpControls" class="hidden">
+          <div class="control-group">
+            <label>IP Address</label>
+            <input id="tcpIp" type="text" value="127.0.0.1" />
+          </div>
+
+          <div class="control-group">
+            <label>Port</label>
+            <input id="tcpPort" type="number" value="50023" />
           </div>
         </div>
-        <button id="serialRefreshButton" class="btn secondary">Refresh</button>
+
+        <button id="connectButton" class="btn primary">Connect</button>
+
       </div>
 
-      <div id="tcpControls" class="hidden">
-        <div class="control-group">
-          <label>IP Address</label>
-          <input id="tcpIp" type="text" value="127.0.0.1" />
-        </div>
+      <div class="section-divider"></div>
 
-        <div class="control-group">
-          <label>Port</label>
-          <input id="tcpPort" type="number" value="50023" />
-        </div>
+      <div class="section-title">Signals</div>
+
+      <div id="signalList"></div>
+
+      <div class="section-divider"></div>
+
+      <div class="section-title">View</div>
+
+      <div class="control-group">
+        <label>Window Size</label>
+        <input id="windowSize" type="number" value="200" title="Recommended range: 10 to 10,000" />
       </div>
-      
-      <button id="connectButton" class="btn primary">Connect</button>
-    
-    </div>
 
-    <div class="section-divider"></div>
+      <div id="yControls" class="axis-panel">
 
-    <div class="section-title">Signals</div>
+        <div class="axis-header">
+          <span>Left Axis</span>
 
-    <div id="signalList"></div>
+          <div class="inline-controls">
+            <span>Auto</span>
 
-    <div class="section-divider"></div>
+            <label class="toggle">
+              <input type="checkbox" id="yAuto" checked />
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
 
-    <div class="section-title">View</div>
+        <div class="axis-range">
 
-    <div class="control-group">
-      <label>Window Size</label>
-      <input id="windowSize" type="number" value="200" title="Recommended range: 10 to 10,000"/>
-    </div>
+          <div class="control-group">
+            <label>Min</label>
+            <input id="yMin" type="number" value="0" />
+          </div>
 
-    <div id="yControls" class="axis-panel">
+          <div class="control-group">
+            <label>Max</label>
+            <input id="yMax" type="number" value="100" />
+          </div>
 
-      <div class="axis-header">
-        <span>Left Axis</span>
+        </div>
 
+      </div>
+
+      <div id="y1Controls" class="axis-panel hidden">
+
+        <div class="axis-header">
+          <span>Right Axis</span>
+
+          <div class="inline-controls">
+            <span>Auto</span>
+
+            <label class="toggle">
+              <input type="checkbox" id="y1Auto" checked />
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="axis-range">
+
+          <div class="control-group">
+            <label>Min</label>
+            <input id="y1Min" type="number" value="0" />
+          </div>
+
+          <div class="control-group">
+            <label>Max</label>
+            <input id="y1Max" type="number" value="100" />
+          </div>
+
+        </div>
+
+      </div>
+
+      <div class="section-divider"></div>
+
+      <div class="section-title">Logging</div>
+
+      <div class="control-group">
+        <label>Save Folder</label>
         <div class="inline-controls">
-          <span>Auto</span>
-
-          <label class="toggle">
-            <input type="checkbox" id="yAuto" checked />
-            <span class="slider"></span>
-          </label>
+          <input id="saveFolderPath" type="text" readonly />
+          <button id="browseSaveFolder" class="btn secondary">Browse</button>
         </div>
       </div>
 
-      <div class="axis-range">
-
-        <div class="control-group">
-          <label>Min</label>
-          <input id="yMin" type="number" value="0" />
-        </div>
-
-        <div class="control-group">
-          <label>Max</label>
-          <input id="yMax" type="number" value="100" />
-        </div>
-
+      <div class="app-version">
+        v1.3.0
       </div>
 
     </div>
 
-    <div id="y1Controls" class="axis-panel hidden">
+    <div id="sidebarResizeHandle"></div>
 
-      <div class="axis-header">
-        <span>Right Axis</span>
+    <!-- MAIN -->
+    <div class="main">
 
-        <div class="inline-controls">
-          <span>Auto</span>
+      <div class="topbar">
+        <div class="center-controls">
 
-          <label class="toggle">
-            <input type="checkbox" id="y1Auto" checked />
-            <span class="slider"></span>
-          </label>
+          <div class="status-item">
+            <div id="connectionStatusDot" class="dot off"></div>
+            <span id="connectionStatusText">Disconnected</span>
+          </div>
+
+          <button id="runToggleButton" class="btn run-control success" disabled>
+            Start
+          </button>
+
+          <div class="status-item">
+            <div id="runningStatusDot" class="dot off"></div>
+            <span id="runningStatusText">Stopped</span>
+          </div>
+
         </div>
       </div>
 
-      <div class="axis-range">
-
-        <div class="control-group">
-          <label>Min</label>
-          <input id="y1Min" type="number" value="0" />
+      <div class="card chart-card">
+        <div class="chart-header">
+          <div class="chart-title">Live Sensor Data</div>
         </div>
 
-        <div class="control-group">
-          <label>Max</label>
-          <input id="y1Max" type="number" value="100" />
+        <div class="chart-wrapper">
+          <canvas id="chart"></canvas>
         </div>
-
       </div>
 
-    </div>
-
-    <div class="section-divider"></div>
-
-    <div class="section-title">Logging</div>
-
-    <div class="control-group">
-      <label>Save Folder</label>
-      <div class="inline-controls">
-        <input id="saveFolderPath" type="text" readonly />
-        <button id="browseSaveFolder" class="btn secondary">Browse</button>
-      </div>
-    </div>
-
-    <div class="app-version">
-      v1.2.0
     </div>
 
   </div>
 
-  <div id="sidebarResizeHandle"></div>
-
-  <!-- MAIN -->
-  <div class="main">
-
-    <div class="topbar">
-      <div class="center-controls">
-
-        <div class="status-item">
-          <div id="connectionStatusDot" class="dot off"></div>
-          <span id="connectionStatusText">Disconnected</span>
-        </div>
-
-        <button id="runToggleButton" class="btn run-control success" disabled>
-          Start
-        </button>
-
-        <div class="status-item">
-          <div id="runningStatusDot" class="dot off"></div>
-          <span id="runningStatusText">Stopped</span>
-        </div>
-
-      </div>
-    </div>
-
-    <div class="card chart-card">
-      <div class="chart-header">
-        <div class="chart-title">Live Sensor Data</div>
-      </div>
-
-      <div class="chart-wrapper">
-        <canvas id="chart"></canvas>
-      </div>
-    </div>
-
-  </div>
-
-</div>
-
-<script src="../../node_modules/chart.js/dist/chart.umd.js"></script>
-<script src="../../node_modules/sortablejs/Sortable.min.js"></script>
-<script type="module" src="renderer.js"></script>
+  <script src="../../node_modules/chart.js/dist/chart.umd.js"></script>
+  <script src="../../node_modules/sortablejs/Sortable.min.js"></script>
+  <script type="module" src="renderer.js"></script>
 
 </body>
 

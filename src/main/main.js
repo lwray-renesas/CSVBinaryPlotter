@@ -13,6 +13,7 @@ let serialPort;
 let tcpSocket;
 let plotBuffer = [];
 let currentLogFilePath = null;
+let currentErrorFilePath = null;
 let parserReady = false;
 
 let appState = new StateManager((newState) => {
@@ -22,8 +23,8 @@ let appState = new StateManager((newState) => {
   }
 });
 
-let binaryParser =
-    new CsvBinaryParser({onRow: handleParsedRow, onMeta: handleMeta});
+let binaryParser = new CsvBinaryParser(
+    {onRow : handleParsedRow, onMeta : handleMeta, onError : handleError});
 
 // Function generates a log file path from the current date time.
 function generateLogFilePath(folder) {
@@ -32,6 +33,20 @@ function generateLogFilePath(folder) {
   const pad = (n) => n.toString().padStart(2, '0');
 
   const ts =
+      `${pad(now.getDate())}_${pad(now.getMonth() + 1)}_${now.getFullYear()}_` +
+      `${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+
+  return path.join(folder, `data_${ts}.csv`);
+}
+
+// Function generates a log file path from the current date time.
+function generateErrorFilePath(folder) {
+  const now = new Date();
+
+  const pad = (n) => n.toString().padStart(2, '0');
+
+  const ts =
+      `ErrorLog_` +
       `${pad(now.getDate())}_${pad(now.getMonth() + 1)}_${now.getFullYear()}_` +
       `${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
 
@@ -51,7 +66,8 @@ function handleParsedRow(values) {
     pushPlotRow(values);
     if (win && !win.isDestroyed() && currentLogFilePath) {
       fs.appendFile(currentLogFilePath, values.join(',') + '\n', (err) => {
-        if (err) console.error(err);
+        if (err)
+          console.error(err);
       });
     }
   }
@@ -61,29 +77,37 @@ function handleMeta(meta) {
   const current = appState.get().parser;
 
   switch (meta.type) {
-    case 'names':
-      appState.set({parser: {...current, names: meta.data}});
-      if (currentLogFilePath) {
-        fs.appendFileSync(currentLogFilePath, meta.data.join(',') + '\n');
-      }
-      break;
+  case 'names':
+    appState.set({parser : {...current, names : meta.data}});
+    if (currentLogFilePath) {
+      fs.appendFileSync(currentLogFilePath, meta.data.join(',') + '\n');
+    }
+    break;
 
-    case 'types':
-      appState.set({parser: {...current, types: meta.data}});
-      if (currentLogFilePath) {
-        fs.appendFileSync(currentLogFilePath, meta.data.join(',') + '\n');
-      }
-      break;
+  case 'types':
+    appState.set({parser : {...current, types : meta.data}});
+    if (currentLogFilePath) {
+      fs.appendFileSync(currentLogFilePath, meta.data.join(',') + '\n');
+    }
+    break;
 
-    case 'endian':
-      appState.set({parser: {...current, endian: meta.data}});
-      if (currentLogFilePath) {
-        fs.appendFileSync(currentLogFilePath, meta.data + '\n');
-      }
-      break;
+  case 'endian':
+    appState.set({parser : {...current, endian : meta.data}});
+    if (currentLogFilePath) {
+      fs.appendFileSync(currentLogFilePath, meta.data + '\n');
+    }
+    break;
   }
 
   checkHandshakeComplete();
+}
+
+function handleError(data) {
+  if (currentErrorFilePath) {
+    fs.appendFileSync(currentErrorFilePath,
+                      `Unexpected Error, Data Frame Received: ${data}` +
+                          '\n');
+  }
 }
 
 function checkHandshakeComplete() {
@@ -91,7 +115,8 @@ function checkHandshakeComplete() {
 
   const complete = names.length > 0 && types.length > 0 && !!endian;
 
-  if (!complete) return;
+  if (!complete)
+    return;
 
   // Reset parser now that we know format
   parserReady = true;
@@ -100,13 +125,13 @@ function checkHandshakeComplete() {
 
 function createWindow() {
   win = new BrowserWindow({
-    width: 1400,
-    height: 900,
+    width : 1400,
+    height : 900,
 
-    backgroundColor: '#0f172a',
-    webPreferences: {
-      preload: path.join(__dirname, '../renderer/preload.js'),
-      contextIsolation: true,
+    backgroundColor : '#0f172a',
+    webPreferences : {
+      preload : path.join(__dirname, '../renderer/preload.js'),
+      contextIsolation : true,
     },
   });
 
@@ -120,12 +145,12 @@ function createWindow() {
 
 function createMenu() {
   // TODO: No need for release
-  const template = [{
-    label: 'Settings',
-    submenu: [
-      {role: 'toggleDevTools'},
+  const template = [ {
+    label : 'Settings',
+    submenu : [
+      {role : 'toggleDevTools'},
     ]
-  }];
+  } ];
 
   Menu.setApplicationMenu(Menu.buildFromTemplate(template));
 }
@@ -134,18 +159,18 @@ async function connectSerial(settings) {
   try {
     if (serialPort?.isOpen) {
       return {
-        success: false,
-        error: 'Port already open',
+        success : false,
+        error : 'Port already open',
       };
     }
 
     serialPort = new SerialPort({
-      path: settings.portName,
-      baudRate: Number(settings.baudRate),
-      dataBits: Number(settings.dataBits),
-      stopBits: Number(settings.stopBits),
-      parity: settings.parity,
-      autoOpen: false,
+      path : settings.portName,
+      baudRate : Number(settings.baudRate),
+      dataBits : Number(settings.dataBits),
+      stopBits : Number(settings.stopBits),
+      parity : settings.parity,
+      autoOpen : false,
     });
 
     // Waits for promise to resolve (i.e., port to open or fail to open)
@@ -167,23 +192,21 @@ async function connectSerial(settings) {
     serialPort.removeAllListeners('data');
 
     // Start listening for data
-    serialPort.on('data', (chunk) => {
-      binaryParser.push(chunk);
-    });
+    serialPort.on('data', (chunk) => { binaryParser.push(chunk); });
 
     // Update app state with port information
     appState.set({
-      isConnected: true,
-      lastError: null,
-      connection: {
+      isConnected : true,
+      lastError : null,
+      connection : {
         ...appState.get().connection,
-        type: 'serial',
-        serialSettings: {
-          portName: settings.portName,
-          baudRate: Number(settings.baudRate),
-          dataBits: Number(settings.dataBits),
-          stopBits: Number(settings.stopBits),
-          parity: settings.parity,
+        type : 'serial',
+        serialSettings : {
+          portName : settings.portName,
+          baudRate : Number(settings.baudRate),
+          dataBits : Number(settings.dataBits),
+          stopBits : Number(settings.stopBits),
+          parity : settings.parity,
         },
       },
     });
@@ -193,21 +216,21 @@ async function connectSerial(settings) {
       console.error('Serial error:', err.message);
       if (win && !win.isDestroyed()) {
         appState.set(
-            {isConnected: false, isRunning: false, lastError: err.message});
+            {isConnected : false, isRunning : false, lastError : err.message});
       }
     });
 
     // If we disconnect, handle it.
     serialPort.on('close', (err) => {
       if (win && !win.isDestroyed()) {
-        appState.set({isConnected: false, isRunning: false});
+        appState.set({isConnected : false, isRunning : false});
       }
     });
 
   } catch (err) {
     console.error(err);
     // Update app state
-    appState.set({isConnected: false, lastError: err.message});
+    appState.set({isConnected : false, lastError : err.message});
   }
 }
 
@@ -225,34 +248,32 @@ async function connectTcp(settings) {
       tcpSocket.once('error', reject);
     });
 
-    tcpSocket.on('data', (chunk) => {
-      binaryParser.push(chunk);
-    });
+    tcpSocket.on('data', (chunk) => { binaryParser.push(chunk); });
 
     tcpSocket.on('close', () => {
       appState.set({
-        isConnected: false,
-        isRunning: false,
+        isConnected : false,
+        isRunning : false,
       });
     });
 
     tcpSocket.on('error', (err) => {
       appState.set({
-        isConnected: false,
-        isRunning: false,
-        lastError: err.message,
+        isConnected : false,
+        isRunning : false,
+        lastError : err.message,
       });
     });
 
     appState.set({
-      isConnected: true,
-      lastError: null,
-      connection: {
+      isConnected : true,
+      lastError : null,
+      connection : {
         ...appState.get().connection,
-        type: 'tcp',
-        tcpSettings: {
-          ip: settings.ip,
-          port: settings.port,
+        type : 'tcp',
+        tcpSettings : {
+          ip : settings.ip,
+          port : settings.port,
         },
       },
     });
@@ -260,8 +281,8 @@ async function connectTcp(settings) {
   } catch (err) {
     tcpSocket = null;
     appState.set({
-      isConnected: false,
-      lastError: err.message,
+      isConnected : false,
+      lastError : err.message,
     });
   }
 }
@@ -290,14 +311,14 @@ ipcMain.handle('state-get', () => {
 
 ipcMain.handle('select-save-folder', async () => {
   const result = await dialog.showOpenDialog(
-      {title: 'Select Save Folder', properties: ['openDirectory']});
+      {title : 'Select Save Folder', properties : [ 'openDirectory' ]});
 
   // result.filePaths is an array
-  const folderPath = result.canceled || result.filePaths.length === 0 ?
-      null :
-      result.filePaths[0];
+  const folderPath = result.canceled || result.filePaths.length === 0
+                         ? null
+                         : result.filePaths[0];
 
-  appState.set({saveFolderPath: folderPath});
+  appState.set({saveFolderPath : folderPath});
 });
 
 ipcMain.handle('serial-list-ports', async () => {
@@ -331,13 +352,13 @@ ipcMain.handle('data-disconnect', async () => {
     }
 
     // Update app state
-    appState.set({isConnected: false, isRunning: false});
+    appState.set({isConnected : false, isRunning : false});
 
   } catch (err) {
     console.error(err);
     // Update app state
     appState.set(
-        {isConnected: false, isRunning: false, lastError: err.message});
+        {isConnected : false, isRunning : false, lastError : err.message});
   }
 });
 
@@ -346,7 +367,7 @@ ipcMain.handle('run-toggle-notify', async () => {
     return;
   }
 
-  appState.set({isRunning: !(appState.get().isRunning)});
+  appState.set({isRunning : !(appState.get().isRunning)});
   const state = appState.get();
 
   if (state.isRunning) {
@@ -355,16 +376,18 @@ ipcMain.handle('run-toggle-notify', async () => {
 
     // Reset parser state in appState
     appState.set(
-        {parser: {names: [], types: [], endian: null}},
+        {parser : {names : [], types : [], endian : null}},
     );
 
     // Make a savefile if applicable
     if (state.saveFolderPath) {
       currentLogFilePath = generateLogFilePath(state.saveFolderPath);
+      currentErrorFilePath = generateErrorFilePath(state.saveFolderPath);
       // create file (overwrite if exists)
       fs.writeFileSync(currentLogFilePath, '');
     } else {
       currentLogFilePath = null;
+      currentErrorFilePath = null;
     }
 
     // Request metadata
@@ -372,6 +395,7 @@ ipcMain.handle('run-toggle-notify', async () => {
 
   } else {
     currentLogFilePath = null;
+    currentErrorFilePath = null;
     binaryParser.reset();
   }
 });
@@ -381,7 +405,7 @@ ipcMain.handle('config-update', async (_, config) => {
     if (config.connection) {
       const current = appState.get();
       appState.set({
-        connection: {
+        connection : {
           ...current.connection,
           ...config.connection,
         },
@@ -392,7 +416,7 @@ ipcMain.handle('config-update', async (_, config) => {
     if (serialPort && serialPort.isOpen && config.connection?.serialSettings) {
       await new Promise((resolve, reject) => {
         serialPort.update(
-            {baudRate: Number(config.connection.serialSettings.baudRate)},
+            {baudRate : Number(config.connection.serialSettings.baudRate)},
             (err) => {
               if (err)
                 reject(err);
@@ -405,7 +429,7 @@ ipcMain.handle('config-update', async (_, config) => {
     // Update sample buffer
     if (config.maxSamples) {
       appState.set({
-        maxSamples: config.maxSamples,
+        maxSamples : config.maxSamples,
       });
 
       while (plotBuffer.length > config.maxSamples) {
@@ -417,9 +441,7 @@ ipcMain.handle('config-update', async (_, config) => {
   }
 });
 
-ipcMain.handle('plot-data-get', async () => {
-  return plotBuffer;
-});
+ipcMain.handle('plot-data-get', async () => { return plotBuffer; });
 
 app.on('before-quit', () => {
   if (serialPort && serialPort.isOpen) {
