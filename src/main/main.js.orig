@@ -73,8 +73,14 @@ function handleParsedRow(values) {
   if (appState.get().isRunning && parserReady) {
     pushPlotRow(values);
     if (win && !win.isDestroyed() && currentLogFilePath) {
-      logStream.write(values.join(',') + '\n');// write values to the log file
+<<<<<<< HEAD
+      fs.appendFile(currentLogFilePath, values.join(',') + '\n', (err) => {
+        if (err)
           console.error(err);
+      });
+=======
+      logStream.write(values.join(',') + '\n');// write values to the log file
+>>>>>>> b9e4c1cdfa554518318592fc620393690415b234
     }
   }
 }
@@ -83,26 +89,49 @@ function handleMeta(meta) {
   const current = appState.get().parser;
 
   switch (meta.type) {
+<<<<<<< HEAD
   case 'names':
     appState.set({parser : {...current, names : meta.data}});
-      if (logStream) {
-        logStream.write(meta.data.join(',') + '\n');// Write data to the log file  if log stream exists
+    if (currentLogFilePath) {
+      fs.appendFileSync(currentLogFilePath, meta.data.join(',') + '\n');
     }
     break;
 
   case 'types':
     appState.set({parser : {...current, types : meta.data}});
-      if (logStream) {
-        logStream.write(meta.data.join(',') + '\n');// Write data to the log file  if log stream exists
+    if (currentLogFilePath) {
+      fs.appendFileSync(currentLogFilePath, meta.data.join(',') + '\n');
     }
     break;
 
   case 'endian':
     appState.set({parser : {...current, endian : meta.data}});
-      if (logStream) {
-        logStream.write(meta.data + '\n');// Write data to the log file  if log stream exists
+    if (currentLogFilePath) {
+      fs.appendFileSync(currentLogFilePath, meta.data + '\n');
     }
     break;
+=======
+    case 'names':
+      appState.set({parser: {...current, names: meta.data}});
+      if (logStream) {
+        logStream.write(meta.data.join(',') + '\n');// Write data to the log file  if log stream exists
+      }
+      break;
+
+    case 'types':
+      appState.set({parser: {...current, types: meta.data}});
+      if (logStream) {
+        logStream.write(meta.data.join(',') + '\n');// Write data to the log file  if log stream exists
+      }
+      break;
+
+    case 'endian':
+      appState.set({parser: {...current, endian: meta.data}});
+      if (logStream) {
+        logStream.write(meta.data + '\n');// Write data to the log file  if log stream exists
+      }
+      break;
+>>>>>>> b9e4c1cdfa554518318592fc620393690415b234
   }
 
   checkHandshakeComplete();
@@ -389,17 +418,29 @@ ipcMain.handle('run-toggle-notify', async () => {
     closeLogFile();
     if (state.saveFolderPath) {
       currentLogFilePath = generateLogFilePath(state.saveFolderPath);
+<<<<<<< HEAD
       currentErrorFilePath = generateErrorFilePath(state.saveFolderPath);
-      logStream = fs.createWriteStream(currentLogFilePath, {flags: 'w'});
+      // create file (overwrite if exists)
+      fs.writeFileSync(currentLogFilePath, '');
+    } else {
+      currentLogFilePath = null;
       currentErrorFilePath = null;
+=======
+      // Create file (overwrite if exists)
+      logStream = fs.createWriteStream(currentLogFilePath, {flags: 'w'});
+>>>>>>> b9e4c1cdfa554518318592fc620393690415b234
     }
 
     // Request metadata
     writeTransport('M');
 
   } else {
-    closeLogFile(); // Call the file closer
+<<<<<<< HEAD
+    currentLogFilePath = null;
     currentErrorFilePath = null;
+=======
+    closeLogFile(); // Call the file closer
+>>>>>>> b9e4c1cdfa554518318592fc620393690415b234
     binaryParser.reset();
   }
 });
