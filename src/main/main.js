@@ -78,7 +78,7 @@ function closeLogFile() {
 function handleParsedRow(values) {
   if (appState.get().isRunning && parserReady) {
     pushPlotRow(values);
-    if (win && !win.isDestroyed() && currentLogFilePath) {
+    if (win && !win.isDestroyed() && logStream) {
       logStream.write(values.join(',') + '\n'); // write values to the log file
     }
   }
