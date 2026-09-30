@@ -206,8 +206,9 @@ class CsvBinaryParser {
         this.onRow(values);
       }
     } catch (err) {
+      const badRow = [...this.currentRow ];
       if (this.onError) {
-        this.onError(this.currentRow);
+        this.onError(badRow);
       }
       this.currentRow = [];
     }
@@ -217,31 +218,31 @@ class CsvBinaryParser {
    * Convert buffers → typed values
    */
   _parseRow(fields) {
-    if (!this.columnReaders) {
-      throw new Error('Format not initialised (missing #T/#E)');
-    }
+    if (this.columnReaders) {
+      const values = new Array(fields.length);
 
-    const values = new Array(fields.length);
+      for (let i = 0; i < fields.length; i++) {
+        const buf = fields[i];
 
-    for (let i = 0; i < fields.length; i++) {
-      const buf = fields[i];
+        const expectedSize = this.columnSizes[i];
+        const reader = this.columnReaders[i];
 
-      const expectedSize = this.columnSizes[i];
-      const reader = this.columnReaders[i];
+        if (!reader) {
+          throw new Error(`Missing reader for column ${i}`);
+        }
 
-      if (!reader) {
-        throw new Error(`Missing reader for column ${i}`);
+        if (buf.length !== expectedSize) {
+          throw new Error(`Field ${i} too small (got ${buf.length}, expected ${
+              expectedSize})`);
+        }
+
+        values[i] = reader(buf);
       }
 
-      if (buf.length !== expectedSize) {
-        throw new Error(`Field ${i} too small (got ${buf.length}, expected ${
-            expectedSize})`);
-      }
-
-      values[i] = reader(buf);
+      return values;
     }
 
-    return values;
+    return null;
   }
 
   /*

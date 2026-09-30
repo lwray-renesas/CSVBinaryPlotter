@@ -80,7 +80,6 @@ function handleParsedRow(values) {
     pushPlotRow(values);
     if (win && !win.isDestroyed() && currentLogFilePath) {
       logStream.write(values.join(',') + '\n'); // write values to the log file
-      console.error(err);
     }
   }
 }
