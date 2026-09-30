@@ -14,6 +14,7 @@ let tcpSocket;
 let plotBuffer = [];
 let currentLogFilePath = null;
 let parserReady = false;
+let logStream = null; // Stream queue to hold the log data
 
 let appState = new StateManager((newState) => {
   // On state change, send state update and new state object.
@@ -45,14 +46,20 @@ function pushPlotRow(values) {
     plotBuffer.shift();
   }
 }
+/** @brief  closes the log file, deletes what is still queued*/
+function closeLogFile() {
+  if (logStream) {// if log stream is open
+    logStream.end();// end it
+    logStream = null; // clear the queue
+  }
+  currentLogFilePath = null;// clean the file path
+}
 
 function handleParsedRow(values) {
   if (appState.get().isRunning && parserReady) {
     pushPlotRow(values);
     if (win && !win.isDestroyed() && currentLogFilePath) {
-      fs.appendFile(currentLogFilePath, values.join(',') + '\n', (err) => {
-        if (err) console.error(err);
-      });
+      logStream.write(values.join(',') + '\n');// write values to the log file
     }
   }
 }
@@ -63,22 +70,22 @@ function handleMeta(meta) {
   switch (meta.type) {
     case 'names':
       appState.set({parser: {...current, names: meta.data}});
-      if (currentLogFilePath) {
-        fs.appendFileSync(currentLogFilePath, meta.data.join(',') + '\n');
+      if (logStream) {
+        logStream.write(meta.data.join(',') + '\n');// Write data to the log file  if log stream exists
       }
       break;
 
     case 'types':
       appState.set({parser: {...current, types: meta.data}});
-      if (currentLogFilePath) {
-        fs.appendFileSync(currentLogFilePath, meta.data.join(',') + '\n');
+      if (logStream) {
+        logStream.write(meta.data.join(',') + '\n');// Write data to the log file  if log stream exists
       }
       break;
 
     case 'endian':
       appState.set({parser: {...current, endian: meta.data}});
-      if (currentLogFilePath) {
-        fs.appendFileSync(currentLogFilePath, meta.data + '\n');
+      if (logStream) {
+        logStream.write(meta.data + '\n');// Write data to the log file  if log stream exists
       }
       break;
   }
@@ -359,19 +366,18 @@ ipcMain.handle('run-toggle-notify', async () => {
     );
 
     // Make a savefile if applicable
+    closeLogFile();
     if (state.saveFolderPath) {
       currentLogFilePath = generateLogFilePath(state.saveFolderPath);
-      // create file (overwrite if exists)
-      fs.writeFileSync(currentLogFilePath, '');
-    } else {
-      currentLogFilePath = null;
+      // Create file (overwrite if exists)
+      logStream = fs.createWriteStream(currentLogFilePath, {flags: 'w'});
     }
 
     // Request metadata
     writeTransport('M');
 
   } else {
-    currentLogFilePath = null;
+    closeLogFile(); // Call the file closer
     binaryParser.reset();
   }
 });
