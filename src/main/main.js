@@ -15,7 +15,8 @@ let plotBuffer = [];
 let currentLogFilePath = null;
 let currentErrorFilePath = null;
 let parserReady = false;
-let logStream = null; // Stream queue to hold the log data
+let logStream = null;   // Stream queue to hold the log data
+let errorStream = null; // Stream queue to hold the error data
 
 let appState = new StateManager((newState) => {
   // On state change, send state update and new state object.
@@ -62,19 +63,24 @@ function pushPlotRow(values) {
 }
 /** @brief  closes the log file, deletes what is still queued*/
 function closeLogFile() {
-  if (logStream) {// if log stream is open
-    logStream.end();// end it
+  if (logStream) {    // if log stream is open
+    logStream.end();  // end it
     logStream = null; // clear the queue
   }
-  currentLogFilePath = null;// clean the file path
+  if (errorStream) {    // if error stream is open
+    errorStream.end();  // end it
+    errorStream = null; // clear the queue
+  }
+  currentLogFilePath = null;   // clean the file path
+  currentErrorFilePath = null; // clean the file path
 }
 
 function handleParsedRow(values) {
   if (appState.get().isRunning && parserReady) {
     pushPlotRow(values);
     if (win && !win.isDestroyed() && currentLogFilePath) {
-      logStream.write(values.join(',') + '\n');// write values to the log file
-          console.error(err);
+      logStream.write(values.join(',') + '\n'); // write values to the log file
+      console.error(err);
     }
   }
 }
@@ -85,22 +91,25 @@ function handleMeta(meta) {
   switch (meta.type) {
   case 'names':
     appState.set({parser : {...current, names : meta.data}});
-      if (logStream) {
-        logStream.write(meta.data.join(',') + '\n');// Write data to the log file  if log stream exists
+    if (logStream) {
+      logStream.write(meta.data.join(',') +
+                      '\n'); // Write data to the log file  if log stream exists
     }
     break;
 
   case 'types':
     appState.set({parser : {...current, types : meta.data}});
-      if (logStream) {
-        logStream.write(meta.data.join(',') + '\n');// Write data to the log file  if log stream exists
+    if (logStream) {
+      logStream.write(meta.data.join(',') +
+                      '\n'); // Write data to the log file  if log stream exists
     }
     break;
 
   case 'endian':
     appState.set({parser : {...current, endian : meta.data}});
-      if (logStream) {
-        logStream.write(meta.data + '\n');// Write data to the log file  if log stream exists
+    if (logStream) {
+      logStream.write(meta.data +
+                      '\n'); // Write data to the log file  if log stream exists
     }
     break;
   }
@@ -109,10 +118,9 @@ function handleMeta(meta) {
 }
 
 function handleError(data) {
-  if (currentErrorFilePath) {
-    fs.appendFileSync(currentErrorFilePath,
-                      `Unexpected Error, Data Frame Received: ${data}` +
-                          '\n');
+  if (errorStream) {
+    errorStream.write(`Unexpected Error, Data Frame Received: ${data}` +
+                      '\n');
   }
 }
 
@@ -390,7 +398,12 @@ ipcMain.handle('run-toggle-notify', async () => {
     if (state.saveFolderPath) {
       currentLogFilePath = generateLogFilePath(state.saveFolderPath);
       currentErrorFilePath = generateErrorFilePath(state.saveFolderPath);
-      logStream = fs.createWriteStream(currentLogFilePath, {flags: 'w'});
+      logStream = fs.createWriteStream(currentLogFilePath, {flags : 'w'});
+      errorStream = fs.createWriteStream(currentErrorFilePath, {flags : 'w'});
+    } else {
+      logStream = null;
+      errorStream = null;
+      currentLogFilePath = null;
       currentErrorFilePath = null;
     }
 
@@ -399,6 +412,9 @@ ipcMain.handle('run-toggle-notify', async () => {
 
   } else {
     closeLogFile(); // Call the file closer
+    logStream = null;
+    errorStream = null;
+    currentLogFilePath = null;
     currentErrorFilePath = null;
     binaryParser.reset();
   }
