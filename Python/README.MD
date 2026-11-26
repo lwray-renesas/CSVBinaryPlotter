@@ -22,17 +22,17 @@ This allows existing firmware to be extended with additional measurements, calcu
 
 ## Table of Contents
 
-- Architecture
-- Data Flow
-- Core Component
-- Metadata Processing
-- Row Injection
-- Usage
-- Command Line Tool
-- Example Injection
-- Shutdown Behaviour
-- Additional Information
-- License
+- [Architecture](#architecture)
+- [Data Flow](#data-flow)
+- [Core Component](#core-component)
+- [Metadata Processing](#metadata-processing)
+- [Row Injection](#row-injection)
+- [Usage](#usage)
+- [Command Line Tool](#command-line-tool)
+- [Example Injection](#example-injection)
+- [Shutdown Behaviour](#shutdown-behaviour)
+- [Additional Information](#additional-information)
+- [License](#license)
 
 ---
 

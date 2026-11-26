@@ -52,10 +52,12 @@ For another useful tool which allows viewing the generated CSV files from this t
 ## What's Included
 The project is structured as follows:
 ```
-├── C/src           # Example C encoder library for embedded systems
-├── C/README.md     # Readme document for learning how to port the project
-├── src/            # Electron application source code (UI, serial handling, plotting)
-└── README.md       # This document
+├── C/src            # Example C encoder library for embedded systems
+├── C/README.md      # Readme document for learning how to port the project
+├── Python/src       # Example Python broadcaster to funnel COM data to IP/TCP port.
+├── Python/README.md # Readme document for learning how to use the project
+├── src/             # Electron application source code (UI, serial handling, plotting)
+└── README.md        # This document
 ```
 
 ### Components
@@ -71,6 +73,9 @@ The project is structured as follows:
   - Implements the expected transmission protocol
   - Can be adapted to your target platform
 
+- **Python Broadcaster (`Python/`)**
+  - Demonstrates how to funnel and manipulate data from COM to IP/TCP
+
 ---
 
 ## Getting Started
@@ -82,7 +87,7 @@ The project is structured as follows:
 - OR just download the application from the releases section.
 - A serial device sending properly encoded CSV binary data (see [C/README.MD](C/README.MD) for more information)
 OR
-- A TCP server transmitting CSV Binary Protocol data
+- A TCP server transmitting CSV Binary Protocol data (see [Python/README.MD](Python/README.MD) for an example)
 
 ### Installing Source
 
