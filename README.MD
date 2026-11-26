@@ -122,18 +122,40 @@ Steps 4, 5 & 6 are shown in the image below.
 
 ![Using the Tool](img/UsingTheTool.gif "Using the Tool")
 
-### File Save Behaviour
+### Data Logging
 
-If you choose to use the file save behaviour, the tool will automatically generate a save file on each run.
+If you choose to use the data logging behaviour, the tool will automatically generate a save file on each run.
 The file saved will be CSV formatted, with all meta data in first 3 lines & the conversion from raw binary to ascii completed.
 
 The file will be saved in the folder chosen, with the name format:
 ```
-data_DD_MM_YYYY_HHMMSS.csv
+<base_filename>_<run_index>.csv
+
+e.g.,
+capture_1.csv
+capture_2.csv
+capture_3.csv
+etc...
 ```
 
 So each run has a unique identifier.
 
+### Connection Methods
+
+You can chose to accept data either from Serial (COM) port or via IP/TCP port.
+
+### Signals
+
+Each signal gets an entry in the signal list with functionality:
+- Hide/Show signal by clicking the coloured button to the left of the signal name.
+- Show the signal on the left or the right axis by clicking the L (or R) on the right of the signal entry.
+- Reorder the signals by clicking and dragging the hamburger icon on the left of the signal.
+
+### View
+
+The view port can be adjusted based on window size (number of samples in the x direction to show).
+
+Each y axis can be adjusted also, for each visible axis (Left or Right) you can auto detect the axis height based on min and max value or you can set manual values. Auto judgement is enabled by default but manual judgement is populated with the last calculated auto readings for easy to use inital values.
 
 ---
 
