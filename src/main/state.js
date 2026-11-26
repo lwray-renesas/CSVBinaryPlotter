@@ -28,6 +28,7 @@ const defaultState = {
   },
 
   saveFolderPath: null,
+  baseFileName: 'capture',
   lastError: null,
 
   isPortBusy: false,  // connecting/disconnecting

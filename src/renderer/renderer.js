@@ -135,7 +135,7 @@ async function applyConfig() {
         document.getElementById('windowSize').value,
         10,
         ),
-
+    baseFileName: document.getElementById('baseFileName').value,
     connection: {
       type: document.getElementById('connectionType').value,
 
@@ -295,6 +295,10 @@ function StateUpdated(newState) {
     document.getElementById('saveFolderPath').value = '';
   }
 
+  // Save file folder path
+  document.getElementById('baseFileName').value =
+      newState.baseFileName ?? 'capture';
+
   // Update buffers
   const parser = newState.parser;
   // Create a simple “signature” to detect change
@@ -438,6 +442,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('tcpIp').onchange = applyConfig;
   document.getElementById('tcpPort').onchange = applyConfig;
   document.getElementById('saveFolderPath').onchange = applyConfig;
+  document.getElementById('baseFileName').onchange = applyConfig;
 
   document.getElementById('yAuto').addEventListener('change', (e) => {
     chartManager.yAuto = e.target.checked;
